@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────
+   디자인 토큰 — 밝은 한지 바탕 + 쪽빛 포인트
+   ─────────────────────────────────────────────── */
+@theme {
+  --color-paper: #f7f3ea;
+  --color-paper-deep: #ece4d3;
+  --color-paper-edge: #dfd4bd;
+  --color-paper-light: #fbf8f2;
+  --color-ink: #2a2926;
+  --color-ink-soft: #6b665c;
+  --color-ink-faint: #8f897c;
+  --color-blue: #2a5caa;
+  --color-blue-deep: #1d4382;
+  --color-blue-soft: #5b82c2;
+  --color-blue-mist: #dde7f4;
+  --color-danger: #b4432f;
+  --color-danger-mist: #f5e1db;
+  --color-success: #3e7b5a;
+  --color-success-mist: #deece3;
+
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-serif: var(--font-gowun), "Nanum Myeongjo", "AppleMyungjo", serif;
+  --font-hand: var(--font-pen), var(--font-gowun), cursive;
+
+  --shadow-paper: 0 1px 1px rgb(70 52 24 / 0.04), 0 2px 6px rgb(70 52 24 / 0.05), 0 10px 28px -12px rgb(70 52 24 / 0.16);
+  --shadow-lift: 0 2px 2px rgb(70 52 24 / 0.04), 0 8px 18px rgb(70 52 24 / 0.08), 0 28px 52px -18px rgb(70 52 24 / 0.28);
+  --shadow-inset: inset 0 1px 2px rgb(70 52 24 / 0.08);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-ink: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-shake: shake 0.42s var(--ease-out-soft);
+  --animate-float-in: float-in 0.6s var(--ease-out-soft) both;
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(3px); }
+  }
+  @keyframes float-in {
+    from { opacity: 0; transform: translateY(14px); filter: blur(2px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+}
+
+/* 한지 결: 잔 노이즈 + 닥나무 섬유 (SVG, 수 KB) */
+:root {
+  --hanji-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .36 0 0 0 0 .26 0 0 0 .075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --hanji-fiber: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27600%27%20height%3D%27600%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%238a7550%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M20%20536Q-16%20536%20-54%20546%27%20stroke-width%3D%271.18%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M324%20403Q378%20419%20439%20422%27%20stroke-width%3D%271.13%27%20stroke-opacity%3D%270.07%27%2F%3E%3Cpath%20d%3D%27M403%20282Q478%20306%20552%20305%27%20stroke-width%3D%271.12%27%20stroke-opacity%3D%270.12%27%2F%3E%3Cpath%20d%3D%27M343%20531Q428%20521%20492%20521%27%20stroke-width%3D%270.64%27%20stroke-opacity%3D%270.09%27%2F%3E%3Cpath%20d%3D%27M260%20185Q195%20170%20108%20181%27%20stroke-width%3D%270.75%27%20stroke-opacity%3D%270.11%27%2F%3E%3Cpath%20d%3D%27M305%20256Q332%20258%20367%20269%27%20stroke-width%3D%271.10%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M308%20113Q350%20103%20396%20103%27%20stroke-width%3D%270.98%27%20stroke-opacity%3D%270.12%27%2F%3E%3Cpath%20d%3D%27M151%20528Q108%20520%2057%20510%27%20stroke-width%3D%270.95%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M546%20242Q480%20245%20422%20258%27%20stroke-width%3D%270.85%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M511%2082Q569%2055%20647%2053%27%20stroke-width%3D%271.40%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M374%20101Q434%20115%20469%20105%27%20stroke-width%3D%271.30%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M528%20446Q551%20422%20599%20429%27%20stroke-width%3D%271.06%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M435%20294Q366%20298%20314%20310%27%20stroke-width%3D%271.30%27%20stroke-opacity%3D%270.07%27%2F%3E%3Cpath%20d%3D%27M294%2022Q205%2029%20145%2011%27%20stroke-width%3D%270.67%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M337%20400Q374%20382%20408%20391%27%20stroke-width%3D%271.19%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M420%20299Q387%20309%20377%20307%27%20stroke-width%3D%271.30%27%20stroke-opacity%3D%270.07%27%2F%3E%3Cpath%20d%3D%27M515%20502Q435%20477%20360%20467%27%20stroke-width%3D%271.15%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M243%20151Q195%20147%20156%20134%27%20stroke-width%3D%271.16%27%20stroke-opacity%3D%270.09%27%2F%3E%3Cpath%20d%3D%27M426%20257Q409%20264%20363%20263%27%20stroke-width%3D%271.28%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M132%20381Q112%20395%2075%20381%27%20stroke-width%3D%270.93%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M270%20113Q211%20120%20151%20112%27%20stroke-width%3D%270.83%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M35%20187Q-24%20187%20-69%20203%27%20stroke-width%3D%271.09%27%20stroke-opacity%3D%270.10%27%2F%3E%3Cpath%20d%3D%27M62%20453Q-0%20452%20-74%20424%27%20stroke-width%3D%270.52%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M357%20425Q416%20397%20500%20392%27%20stroke-width%3D%270.58%27%20stroke-opacity%3D%270.06%27%2F%3E%3Cpath%20d%3D%27M359%20550Q395%20536%20421%20538%27%20stroke-width%3D%270.91%27%20stroke-opacity%3D%270.16%27%2F%3E%3Cpath%20d%3D%27M257%20397Q310%20386%20389%20390%27%20stroke-width%3D%271.23%27%20stroke-opacity%3D%270.16%27%2F%3E%3Cpath%20d%3D%27M105%20538Q158%20519%20205%20519%27%20stroke-width%3D%270.57%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M382%20331Q427%20338%20477%20355%27%20stroke-width%3D%270.50%27%20stroke-opacity%3D%270.06%27%2F%3E%3Cpath%20d%3D%27M252%2071Q226%2062%20185%2057%27%20stroke-width%3D%271.27%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M469%20391Q523%20386%20577%20382%27%20stroke-width%3D%271.01%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M392%20374Q345%20360%20267%20350%27%20stroke-width%3D%270.94%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M566%20220Q548%20229%20517%20224%27%20stroke-width%3D%271.36%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M136%20153Q78%20171%203%20180%27%20stroke-width%3D%271.14%27%20stroke-opacity%3D%270.11%27%2F%3E%3Cpath%20d%3D%27M268%20508Q327%20516%20374%20528%27%20stroke-width%3D%270.86%27%20stroke-opacity%3D%270.08%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  --hanji-fleck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .34 0 0 0 0 .22 0 0 0 40 -30.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23k)' opacity='.3'/%3E%3C/svg%3E");
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--color-paper);
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-paper);
+  background-image: var(--hanji-noise), var(--hanji-fiber), var(--hanji-fleck);
+  background-size: 220px 220px, 600px 600px, 300px 300px;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss05";
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-blue-mist);
+  color: var(--color-blue-deep);
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--color-blue);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ───────────────────────────────────────────────
+   한지 카드 · 찢은 종이 가장자리
+   ─────────────────────────────────────────────── */
+@utility hanji-surface {
+  background-color: var(--color-paper-light);
+  background-image: var(--hanji-noise), var(--hanji-fiber);
+  background-size: 220px 220px, 600px 600px;
+}
+
+/* 가장자리만 불규칙하게: 배경을 가상 요소에 두고 SVG 변위 필터를 건다(내용은 선명하게 유지). */
+@utility deckle {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background-color: var(--color-paper-light);
+    background-image: var(--hanji-noise), var(--hanji-fiber);
+    background-size: 220px 220px, 600px 600px;
+    box-shadow: var(--shadow-paper);
+    filter: url(#deckle-edge);
+  }
+}
+
+@utility paper-shadow {
+  box-shadow: var(--shadow-paper);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 붓으로 그은 밑줄 */
+@utility brush-underline {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8.5c30-4 62-5.5 98-4.6 31 .8 62 2.6 98 .6' fill='none' stroke='%232a5caa' stroke-width='3.2' stroke-linecap='round' opacity='.85'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 0.42em;
+  padding-bottom: 0.12em;
+  transition: background-size 0.45s var(--ease-ink);
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 0.42em;
+  }
+}
+
+/* 스켈레톤: 한지 결을 따라 빛이 지나간다 */
+@utility paper-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-paper-deep);
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.55) 50%, transparent 80%);
+    animation: paper-shimmer 1.6s var(--ease-out-soft) infinite;
+  }
+}
+
+@keyframes paper-shimmer {
+  to { transform: translateX(100%); }
+}
+
+/* 먹물 번짐 효과(버튼 누를 때) */
+.ink-drop {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, currentColor 0%, currentColor 38%, transparent 70%);
+  opacity: 0.22;
+  animation: ink-spread 0.7s var(--ease-ink) forwards;
+}
+
+@keyframes ink-spread {
+  60% { opacity: 0.2; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* 스크롤바를 숨긴 가로 스크롤 */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ───────────────────────────────────────────────
+   화면 전환 (React ViewTransition)
+   ─────────────────────────────────────────────── */
+::view-transition-group(.artwork-morph) {
+  animation-duration: 460ms;
+  animation-timing-function: var(--ease-out-soft);
+}
+::view-transition-image-pair(.artwork-morph) {
+  animation-name: morph-blur;
+}
+@keyframes morph-blur {
+  35% { filter: blur(2px); }
+}
+
+::view-transition-old(.page-fade) {
+  animation: 160ms ease-out both vt-fade-out;
+}
+::view-transition-new(.page-fade) {
+  animation: 320ms var(--ease-out-soft) 90ms both vt-fade-in;
+}
+::view-transition-old(.nav-forward) {
+  animation: 200ms ease-in both vt-slide-out-left;
+}
+::view-transition-new(.nav-forward) {
+  animation: 380ms var(--ease-out-soft) both vt-slide-in-right;
+}
+::view-transition-old(.nav-back) {
+  animation: 200ms ease-in both vt-slide-out-right;
+}
+::view-transition-new(.nav-back) {
+  animation: 380ms var(--ease-out-soft) both vt-slide-in-left;
+}
+
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; transform: translateY(10px); filter: blur(3px); } }
+@keyframes vt-slide-out-left { to { opacity: 0; transform: translateX(-36px); } }
+@keyframes vt-slide-in-right { from { opacity: 0; transform: translateX(48px); } }
+@keyframes vt-slide-out-right { to { opacity: 0; transform: translateX(36px); } }
+@keyframes vt-slide-in-left { from { opacity: 0; transform: translateX(-48px); } }
+
+/* ───────────────────────────────────────────────
+   동작 줄이기
+   ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

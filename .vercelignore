@@ -1,0 +1,10 @@
+# 배포 업로드에서 빼는 로컬 전용 폴더 (Vercel이 직접 설치·빌드한다)
+node_modules
+.next
+.next-e2e
+.data
+.playwright-mcp
+test-results
+playwright-report
+.env
+.env.local

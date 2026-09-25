@@ -394,9 +394,9 @@ const CARD_TYPE: Record<
   CardSize,
   { pad: number; label: number; title: number; titleLines: number; artist: number; artistLines: number; meta: number; hint: number; gap: number }
 > = {
-  business: { pad: 4.2, label: 2.7, title: 6.4, titleLines: 2, artist: 3.5, artistLines: 2, meta: 2.7, hint: 2.8, gap: 3.5 },
-  a6: { pad: 8.5, label: 4, title: 12.5, titleLines: 2, artist: 6, artistLines: 3, meta: 4.4, hint: 4.2, gap: 7 },
-  square: { pad: 6.5, label: 3.3, title: 8.4, titleLines: 2, artist: 4.5, artistLines: 2, meta: 3.4, hint: 3.4, gap: 3 },
+  business: { pad: 4.2, label: 2.7, title: 6.4, titleLines: 2, artist: 3.5, artistLines: 2, meta: 2.7, hint: 3.3, gap: 3.5 },
+  a6: { pad: 7.5, label: 4, title: 12.5, titleLines: 2, artist: 6, artistLines: 3, meta: 4.4, hint: 6, gap: 6.5 },
+  square: { pad: 6, label: 3.3, title: 8, titleLines: 2, artist: 4.4, artistLines: 2, meta: 3.3, hint: 4.2, gap: 3 },
 };
 
 function LabelCard({
@@ -432,8 +432,15 @@ function LabelCard({
   );
 
   // 안내 문구는 항상 한 줄: 넘치면 글자를 줄인다.
+  // 안내 문구는 항상 한 줄. A6·정사각은 카드 아래 전체 폭 띠로 크게, 명함은 글 칸 안에 짧게.
+  const band = size !== "business";
   const hint = (
-    <FitText max={t.hint} min={t.hint * 0.55} className={cn("w-full font-bold text-[#2a5caa]", vertical && "text-center")}>
+    <FitText
+      max={t.hint}
+      min={t.hint * 0.6}
+      className={cn("w-full font-bold", band ? "rounded-[1.6mm] bg-[#dde7f4] text-center text-[#1d4382]" : "text-[#2a5caa]")}
+      style={band ? { padding: `${t.hint * 0.32}mm ${t.hint * 0.6}mm` } : undefined}
+    >
       <svg
         viewBox="0 0 24 24"
         style={{ width: "1.2em", height: "1.2em", verticalAlign: "-0.24em", marginRight: "0.3em", display: "inline-block" }}
@@ -453,17 +460,23 @@ function LabelCard({
     <div className="relative h-full w-full">
       <CutFrame show={cutMarks} />
       <div
-        className="relative flex h-full w-full overflow-hidden rounded-[2.5mm] text-[#2a2926]"
+        className="relative flex h-full w-full flex-col overflow-hidden rounded-[2.5mm] text-[#2a2926]"
         style={{
           padding: mm(t.pad),
-          gap: mm(t.gap),
-          flexDirection: vertical ? "column" : "row",
-          alignItems: vertical ? "center" : "stretch",
-          justifyContent: vertical ? "space-between" : undefined,
+          gap: mm(t.gap * 0.7),
           backgroundColor: hanji ? "#f6f0e3" : "#fff",
           backgroundImage: hanji ? "var(--hanji)" : undefined,
           backgroundSize: "60mm 60mm",
           border: hanji ? "none" : "0.25mm solid #d9cfbb",
+        }}
+      >
+      <div
+        className="flex min-h-0 flex-1"
+        style={{
+          gap: mm(t.gap),
+          flexDirection: vertical ? "column" : "row",
+          alignItems: vertical ? "center" : "stretch",
+          justifyContent: vertical ? "space-between" : undefined,
         }}
       >
         <div className={cn("flex min-w-0 flex-col justify-between", vertical ? "w-full flex-none items-center text-center" : "flex-1")}>
@@ -512,11 +525,12 @@ function LabelCard({
               </FitText>
             )}
           </div>
-          {!vertical && hint}
+          {!band && hint}
         </div>
 
         {qrBox}
-        {vertical && hint}
+      </div>
+      {band && hint}
       </div>
     </div>
   );

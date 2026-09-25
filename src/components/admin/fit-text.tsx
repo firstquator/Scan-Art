@@ -37,7 +37,10 @@ export function FitText({ children, max, min, lines = 1, fallbackLines, wrapBelo
     const fits = (sizeMm: number, allowed: number) => {
       el.style.fontSize = `${sizeMm}mm`;
       el.style.whiteSpace = allowed === 1 ? "nowrap" : "normal";
-      const limit = sizeMm * PX_PER_MM * lineHeight * allowed + 1;
+      // 안쪽 여백(padding)은 글 높이에서 뺀다(배경 띠처럼 여백이 있는 상자도 맞출 수 있게).
+      const cs = getComputedStyle(el);
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const limit = sizeMm * PX_PER_MM * lineHeight * allowed + padY + 1;
       return el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= limit;
     };
 

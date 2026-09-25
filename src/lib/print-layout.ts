@@ -92,7 +92,7 @@ export function templateGeometry(
     };
   }
   const card = CARD_SIZES[opts.cardSize];
-  const qr = { business: 38, a6: 64, square: 42 }[opts.cardSize];
+  const qr = { business: 38, a6: 62, square: 40 }[opts.cardSize];
   return { item: { width: card.width, height: card.height }, qr };
 }
 

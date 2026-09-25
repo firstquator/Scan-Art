@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { artworkImages, artworks, settings } from "@/db/schema";
@@ -11,6 +11,7 @@ import {
   saveArtwork,
   setPublished,
 } from "@/lib/data/artworks";
+import { PUBLIC_DATA_TAG } from "@/lib/data/public";
 import { saveSettings } from "@/lib/data/settings";
 import { AppError, fail, ok, toErrorCode, type ActionResult, type ErrorCode } from "@/lib/errors";
 import { isArtworkId } from "@/lib/ids";
@@ -29,9 +30,12 @@ async function guarded<T>(fallback: ErrorCode, run: () => Promise<ActionResult<T
   }
 }
 
+/**
+ * 관람객 화면 데이터 캐시를 즉시 비운다(updateTag: 오래된 화면을 한 번도 더 내보내지 않는다).
+ * 이전·다음 작품 카드·전시 목록이 함께 바뀌므로 태그 하나로 모두 비운다.
+ */
 function revalidatePublic() {
-  revalidatePath("/exhibition");
-  revalidatePath("/a/[id]", "page");
+  updateTag(PUBLIC_DATA_TAG);
 }
 
 // ── 로그인 ────────────────────────────────────────────

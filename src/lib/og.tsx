@@ -46,7 +46,8 @@ let paperCache: string | null = null;
 async function paperTexture(): Promise<string> {
   if (paperCache) return paperCache;
   const tilePath = path.join(process.cwd(), "public", "textures", "hanji.webp");
-  const tile = await sharp(await readFile(tilePath)).resize(640, 640).toBuffer();
+  // 타일은 캔버스(1200×630)보다 작아야 합성할 수 있다.
+  const tile = await sharp(await readFile(tilePath)).resize(512, 512).toBuffer();
   const jpeg = await sharp({ create: { width: OG_SIZE.width, height: OG_SIZE.height, channels: 3, background: PAPER } })
     .composite([{ input: tile, tile: true, left: 0, top: 0 }])
     .jpeg({ quality: 86, mozjpeg: true })

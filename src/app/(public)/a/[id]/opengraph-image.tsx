@@ -1,6 +1,5 @@
 import { isArtworkId } from "@/lib/ids";
-import { getPublicArtwork } from "@/lib/data/artworks";
-import { getSettings } from "@/lib/data/settings";
+import { loadPublicArtwork, loadSettings } from "@/lib/data/public";
 import { joinArtists } from "@/lib/format";
 import { OG_SIZE, renderOgCard } from "@/lib/og";
 
@@ -15,8 +14,8 @@ export async function generateStaticParams() {
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const settings = await getSettings();
-  const result = isArtworkId(id) ? await getPublicArtwork(id) : { status: "missing" as const };
+  const settings = await loadSettings();
+  const result = isArtworkId(id) ? await loadPublicArtwork(id) : { status: "missing" as const };
 
   if (result.status !== "published") {
     return renderOgCard({

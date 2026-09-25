@@ -9,12 +9,8 @@ import { joinArtists } from "@/lib/format";
 import { nanumPen } from "@/lib/fonts";
 import { artworkUrl } from "@/lib/site";
 
-// 한 번 만든 페이지는 캐시해 두고, 관리자가 저장하면 그때 바로 다시 만든다(revalidatePath).
-export const revalidate = 86400;
-
-export async function generateStaticParams() {
-  return [];
-}
+// 요청마다 그리되, 데이터는 lib/data/public.ts 캐시에서 읽는다(관리자가 바꾸면 즉시 반영).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps<"/a/[id]">): Promise<Metadata> {
   const { id } = await params;

@@ -9,7 +9,8 @@ import { formatPeriod } from "@/lib/format";
 import { splitParagraphs } from "@/lib/sentences";
 import { exhibitionUrl } from "@/lib/site";
 
-export const revalidate = 86400;
+// 요청마다 그리되, 데이터는 lib/data/public.ts 캐시에서 읽는다(관리자가 바꾸면 즉시 반영).
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await loadSettings();

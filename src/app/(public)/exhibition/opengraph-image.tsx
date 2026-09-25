@@ -1,4 +1,4 @@
-import { getSettings } from "@/lib/data/settings";
+import { loadSettings } from "@/lib/data/public";
 import { formatPeriod } from "@/lib/format";
 import { OG_SIZE, renderOgCard } from "@/lib/og";
 
@@ -8,7 +8,7 @@ export const contentType = "image/png";
 export const revalidate = 3600;
 
 export default async function Image() {
-  const settings = await getSettings();
+  const settings = await loadSettings();
   return renderOgCard({
     eyebrow: settings.organizer,
     title: settings.title,

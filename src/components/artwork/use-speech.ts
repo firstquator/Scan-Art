@@ -1,13 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
-function pickKoreanVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
-  const ko = voices.filter((v) => v.lang.toLowerCase().replace("_", "-").startsWith("ko"));
-  if (ko.length === 0) return null;
-  // 기기 내장(로컬) 음성을 우선한다: 오프라인에서도 되고 반응이 빠르다.
-  return ko.find((v) => v.localService) ?? ko[0];
-}
+import { pickBestKoreanVoice } from "@/lib/voice";
 
 /**
  * 설명글 읽어주기. 문장 하나씩 읽어서 지금 읽는 문장 번호를 알려준다.
@@ -25,7 +19,8 @@ export function useSpeech(sentences: string[]) {
     const synth = window.speechSynthesis;
     const run = runRef;
     const load = () => {
-      voiceRef.current = pickKoreanVoice(synth.getVoices());
+      // 기기에 있는 한국어 음성 중 가장 자연스러운 것(신경망·향상된 음성 등)을 고른다.
+      voiceRef.current = pickBestKoreanVoice(synth.getVoices());
       setSupported(!!voiceRef.current);
     };
     load();
@@ -60,8 +55,9 @@ export function useSpeech(sentences: string[]) {
       const u = new SpeechSynthesisUtterance(sentences[i]);
       u.voice = voice;
       u.lang = voice.lang;
-      u.rate = 0.92;
-      u.pitch = 1.02;
+      // 고품질 음성은 속도·높이를 크게 바꾸면 오히려 어색해진다. 살짝만 느리게.
+      u.rate = 0.95;
+      u.pitch = 1;
       u.onend = () => speakAt(i + 1);
       u.onerror = (e) => {
         if (e.error !== "interrupted" && e.error !== "canceled") speakAt(i + 1);

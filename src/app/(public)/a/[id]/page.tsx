@@ -18,7 +18,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/a/[id]">): Promise<Metadata> {
   const { id } = await params;
-  if (!isArtworkId(id)) return { title: "작품을 찾을 수 없어요" };
+  if (!isArtworkId(id)) return { title: "작품을 찾을 수 없습니다" };
   const [result, settings] = await Promise.all([loadPublicArtwork(id), loadSettings()]);
   if (result.status !== "published") return { title: settings.title };
 
@@ -58,9 +58,9 @@ export default async function ArtworkPage({ params }: PageProps<"/a/[id]">) {
             <span className="font-serif text-3xl font-bold">…</span>
           </InkMark>
         }
-        title="작품 이야기를 준비하고 있어요"
+        title="작품 이야기를 준비하고 있습니다"
       >
-        <p>선생님과 친구들이 작품 소개를 열심히 만들고 있어요.</p>
+        <p>선생님과 친구들이 작품 소개를 열심히 만들고 있습니다.</p>
         <p>조금 뒤에 다시 QR 코드를 찍어 주세요!</p>
       </StatusPage>
     );

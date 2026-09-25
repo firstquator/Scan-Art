@@ -13,6 +13,11 @@
 - `/a/[id]` 주소 형식은 인쇄된 QR과 묶여 있으므로 바꾸지 않는다.
 - 관람 화면 컴포넌트(`src/components/artwork`)는 관리자 휴대폰 미리보기에서도 쓰이므로 반응형은 뷰포트 `sm:` 대신 컨테이너 쿼리(`@2xl:`)를 쓴다.
 
+## 주소
+
+- `/` → `/admin`으로 이동. 관람객용 전시 표지는 `/exhibition`, 작품은 `/a/{id}`(QR).
+- 한지 질감은 `public/textures/hanji.webp`(`node scripts/generate-hanji.mjs`로 다시 만든다).
+
 ## 로컬 모드
 
-`DATABASE_URL`이 없으면 PGlite(`.data/pglite`), `BLOB_READ_WRITE_TOKEN`이 없으면 로컬 파일 저장소(`.data/uploads`, `/api/dev-files`)를 쓴다. 관리자 비밀번호 기본값 `scanart`.
+`DATABASE_URL`이 없으면 PGlite(`.data/pglite`), `BLOB_READ_WRITE_TOKEN`이 없으면 로컬 파일 저장소(`.data/uploads`, `/api/dev-files`)를 쓴다. 관리자 비밀번호는 `.env`의 `ADMIN_PASSWORD`, 없으면 `0000`.

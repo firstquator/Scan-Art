@@ -16,8 +16,8 @@ export function ArtworkGrid({ artworks }: { artworks: ArtworkLink[] }) {
   if (artworks.length === 0) {
     return (
       <div className="deckle mx-auto max-w-md rounded-[24px] px-6 py-12 text-center">
-        <p className="font-hand text-3xl text-blue-deep">곧 만나요!</p>
-        <p className="mt-2 text-[15px] text-ink-soft">작품들을 전시장에 걸고 있어요.</p>
+        <p className="font-hand text-3xl text-blue-deep">곧 공개됩니다!</p>
+        <p className="mt-2 text-[15px] text-ink-soft">작품들을 전시장에 걸고 있습니다.</p>
       </div>
     );
   }
@@ -32,7 +32,12 @@ export function ArtworkGrid({ artworks }: { artworks: ArtworkLink[] }) {
           viewport={{ once: true, margin: "0px 0px -6% 0px" }}
           transition={{ duration: 0.75, delay: (i % 3) * 0.08, ease: [0.22, 1, 0.36, 1] }}
         >
-          <Link href={`/a/${art.id}`} transitionTypes={["nav-forward"]} className="block rounded-[20px]">
+          <Link
+            href={`/a/${art.id}`}
+            transitionTypes={["nav-forward"]}
+            aria-label={`${art.title}, ${joinArtists(art.artists)}`}
+            className="block rounded-[20px]"
+          >
             <TiltCard className="rounded-[20px]">
               <article className="deckle rounded-[20px] p-2 pb-3.5 sm:p-2.5 sm:pb-4">
                 <ViewTransition name={`art-${art.id}`} share="artwork-morph" default="none">

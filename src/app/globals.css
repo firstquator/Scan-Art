@@ -4,7 +4,7 @@
    디자인 토큰 — 밝은 한지 바탕 + 쪽빛 포인트
    ─────────────────────────────────────────────── */
 @theme {
-  --color-paper: #f7f3ea;
+  --color-paper: #f6f0e3;
   --color-paper-deep: #ece4d3;
   --color-paper-edge: #dfd4bd;
   --color-paper-light: #fbf8f2;
@@ -47,11 +47,11 @@
   }
 }
 
-/* 한지 결: 잔 노이즈 + 닥나무 섬유 (SVG, 수 KB) */
+/* 한지: scripts/generate-hanji.mjs 로 만든 이음매 없는 타일(1024px, 화면에는 512px로 깐다) */
 :root {
-  --hanji-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .36 0 0 0 0 .26 0 0 0 .075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --hanji-fiber: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27600%27%20height%3D%27600%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%238a7550%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M20%20536Q-16%20536%20-54%20546%27%20stroke-width%3D%271.18%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M324%20403Q378%20419%20439%20422%27%20stroke-width%3D%271.13%27%20stroke-opacity%3D%270.07%27%2F%3E%3Cpath%20d%3D%27M403%20282Q478%20306%20552%20305%27%20stroke-width%3D%271.12%27%20stroke-opacity%3D%270.12%27%2F%3E%3Cpath%20d%3D%27M343%20531Q428%20521%20492%20521%27%20stroke-width%3D%270.64%27%20stroke-opacity%3D%270.09%27%2F%3E%3Cpath%20d%3D%27M260%20185Q195%20170%20108%20181%27%20stroke-width%3D%270.75%27%20stroke-opacity%3D%270.11%27%2F%3E%3Cpath%20d%3D%27M305%20256Q332%20258%20367%20269%27%20stroke-width%3D%271.10%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M308%20113Q350%20103%20396%20103%27%20stroke-width%3D%270.98%27%20stroke-opacity%3D%270.12%27%2F%3E%3Cpath%20d%3D%27M151%20528Q108%20520%2057%20510%27%20stroke-width%3D%270.95%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M546%20242Q480%20245%20422%20258%27%20stroke-width%3D%270.85%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M511%2082Q569%2055%20647%2053%27%20stroke-width%3D%271.40%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M374%20101Q434%20115%20469%20105%27%20stroke-width%3D%271.30%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M528%20446Q551%20422%20599%20429%27%20stroke-width%3D%271.06%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M435%20294Q366%20298%20314%20310%27%20stroke-width%3D%271.30%27%20stroke-opacity%3D%270.07%27%2F%3E%3Cpath%20d%3D%27M294%2022Q205%2029%20145%2011%27%20stroke-width%3D%270.67%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M337%20400Q374%20382%20408%20391%27%20stroke-width%3D%271.19%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M420%20299Q387%20309%20377%20307%27%20stroke-width%3D%271.30%27%20stroke-opacity%3D%270.07%27%2F%3E%3Cpath%20d%3D%27M515%20502Q435%20477%20360%20467%27%20stroke-width%3D%271.15%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M243%20151Q195%20147%20156%20134%27%20stroke-width%3D%271.16%27%20stroke-opacity%3D%270.09%27%2F%3E%3Cpath%20d%3D%27M426%20257Q409%20264%20363%20263%27%20stroke-width%3D%271.28%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M132%20381Q112%20395%2075%20381%27%20stroke-width%3D%270.93%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M270%20113Q211%20120%20151%20112%27%20stroke-width%3D%270.83%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M35%20187Q-24%20187%20-69%20203%27%20stroke-width%3D%271.09%27%20stroke-opacity%3D%270.10%27%2F%3E%3Cpath%20d%3D%27M62%20453Q-0%20452%20-74%20424%27%20stroke-width%3D%270.52%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M357%20425Q416%20397%20500%20392%27%20stroke-width%3D%270.58%27%20stroke-opacity%3D%270.06%27%2F%3E%3Cpath%20d%3D%27M359%20550Q395%20536%20421%20538%27%20stroke-width%3D%270.91%27%20stroke-opacity%3D%270.16%27%2F%3E%3Cpath%20d%3D%27M257%20397Q310%20386%20389%20390%27%20stroke-width%3D%271.23%27%20stroke-opacity%3D%270.16%27%2F%3E%3Cpath%20d%3D%27M105%20538Q158%20519%20205%20519%27%20stroke-width%3D%270.57%27%20stroke-opacity%3D%270.08%27%2F%3E%3Cpath%20d%3D%27M382%20331Q427%20338%20477%20355%27%20stroke-width%3D%270.50%27%20stroke-opacity%3D%270.06%27%2F%3E%3Cpath%20d%3D%27M252%2071Q226%2062%20185%2057%27%20stroke-width%3D%271.27%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M469%20391Q523%20386%20577%20382%27%20stroke-width%3D%271.01%27%20stroke-opacity%3D%270.13%27%2F%3E%3Cpath%20d%3D%27M392%20374Q345%20360%20267%20350%27%20stroke-width%3D%270.94%27%20stroke-opacity%3D%270.15%27%2F%3E%3Cpath%20d%3D%27M566%20220Q548%20229%20517%20224%27%20stroke-width%3D%271.36%27%20stroke-opacity%3D%270.14%27%2F%3E%3Cpath%20d%3D%27M136%20153Q78%20171%203%20180%27%20stroke-width%3D%271.14%27%20stroke-opacity%3D%270.11%27%2F%3E%3Cpath%20d%3D%27M268%20508Q327%20516%20374%20528%27%20stroke-width%3D%270.86%27%20stroke-opacity%3D%270.08%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-  --hanji-fleck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='1' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .34 0 0 0 0 .22 0 0 0 40 -30.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23k)' opacity='.3'/%3E%3C/svg%3E");
+  --hanji: url("/textures/hanji.webp");
+  /* 카드용: 같은 한지를 한 겹 더 밝게 */
+  --hanji-sheet: linear-gradient(rgb(255 253 247 / 0.5), rgb(255 253 247 / 0.5)), url("/textures/hanji.webp");
   color-scheme: light;
   -webkit-tap-highlight-color: transparent;
 }
@@ -63,8 +63,8 @@ html {
 
 body {
   background-color: var(--color-paper);
-  background-image: var(--hanji-noise), var(--hanji-fiber), var(--hanji-fleck);
-  background-size: 220px 220px, 600px 600px, 300px 300px;
+  background-image: var(--hanji);
+  background-size: 512px 512px;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: "ss05";
@@ -73,15 +73,53 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 누를 수 있는 곳은 모두 손가락 모양 커서. (Tailwind 4는 버튼 기본 커서를 없앴다)
+   base 층에 두어 cursor-grab·cursor-zoom-in 같은 개별 지정이 우선하게 한다. */
+@layer base {
+  a[href],
+  button,
+  summary,
+  label[for],
+  select,
+  [role="button"],
+  [role="switch"],
+  [role="tab"],
+  [role="radio"],
+  [role="checkbox"],
+  [role="option"],
+  [role="menuitem"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="file"],
+  input[type="color"],
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+}
+
 ::selection {
   background: var(--color-blue-mist);
   color: var(--color-blue-deep);
 }
 
-:focus-visible {
-  outline: 2.5px solid var(--color-blue);
-  outline-offset: 3px;
-  border-radius: 6px;
+/* 키보드 포커스 표시: 얇고 은은하게. 글자 입력칸은 자체 포커스 스타일(테두리 + 옅은 번짐)을 쓴다. */
+@layer base {
+  :focus-visible {
+    outline: 1.5px solid color-mix(in srgb, var(--color-blue) 70%, transparent);
+    outline-offset: 2px;
+  }
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]):focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+  }
 }
 
 /* ───────────────────────────────────────────────
@@ -89,8 +127,10 @@ body {
    ─────────────────────────────────────────────── */
 @utility hanji-surface {
   background-color: var(--color-paper-light);
-  background-image: var(--hanji-noise), var(--hanji-fiber);
-  background-size: 220px 220px, 600px 600px;
+  background-image: var(--hanji-sheet);
+  background-size: auto, 512px 512px;
+  /* 바탕과 섬유 무늬가 겹쳐 보이지 않게 위치를 어긋나게 둔다 */
+  background-position: 0 0, 173px 91px;
 }
 
 /* 가장자리만 불규칙하게: 배경을 가상 요소에 두고 SVG 변위 필터를 건다(내용은 선명하게 유지). */
@@ -104,8 +144,10 @@ body {
     z-index: -1;
     border-radius: inherit;
     background-color: var(--color-paper-light);
-    background-image: var(--hanji-noise), var(--hanji-fiber);
-    background-size: 220px 220px, 600px 600px;
+    background-image: var(--hanji-sheet);
+    background-size: auto, 512px 512px;
+    /* 바탕과 섬유 무늬가 겹쳐 보이지 않게 위치를 어긋나게 둔다 */
+    background-position: 0 0, 173px 91px;
     box-shadow: var(--shadow-paper);
     filter: url(#deckle-edge);
   }
@@ -166,6 +208,38 @@ body {
 @keyframes ink-spread {
   60% { opacity: 0.2; }
   to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* 얇은 한지색 스크롤바 (관리자·전시·작품 화면, 안쪽 스크롤 영역 모두)
+   크롬·엣지·사파리: 둥근 알약 모양 / 파이어폭스: 기본 얇은 막대에 같은 색 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background-color: rgb(107 102 92 / 0.32);
+  background-clip: padding-box;
+  transition: background-color 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(42 92 170 / 0.55);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: rgb(42 92 170 / 0.75);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+@supports (-moz-appearance: none) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(107 102 92 / 0.4) transparent;
+  }
 }
 
 /* 스크롤바를 숨긴 가로 스크롤 */

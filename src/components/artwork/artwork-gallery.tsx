@@ -59,7 +59,7 @@ export function ArtworkGallery({ images, title, parallax = true }: ArtworkGaller
     return (
       <div ref={frameRef} className="deckle mx-auto flex aspect-[4/3] w-full max-w-2xl flex-col items-center justify-center gap-3 rounded-[22px] text-ink-faint">
         <IconImage size={40} strokeWidth={1.3} />
-        <p className="text-sm">작품 사진을 준비하고 있어요</p>
+        <p className="text-sm">작품 사진을 준비하고 있습니다</p>
       </div>
     );
   }
@@ -157,8 +157,8 @@ function NavArrow({ side, disabled, onClick }: { side: "left" | "right"; disable
       disabled={disabled}
       aria-label={side === "left" ? "이전 사진" : "다음 사진"}
       className={cn(
-        "absolute top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper-light/90 text-ink shadow-[var(--shadow-paper)] backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-paper-light disabled:pointer-events-none disabled:opacity-0 @2xl:flex",
-        side === "left" ? "left-3" : "right-3",
+        "absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-paper-light/95 text-ink shadow-[var(--shadow-paper)] backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-paper-light active:scale-95 disabled:pointer-events-none disabled:opacity-0 @2xl:h-11 @2xl:w-11",
+        side === "left" ? "left-2 @2xl:left-3" : "right-2 @2xl:right-3",
       )}
     >
       {side === "left" ? <IconChevronLeft /> : <IconChevronRight />}

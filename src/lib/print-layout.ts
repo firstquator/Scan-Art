@@ -14,7 +14,7 @@ export const CARD_SIZES: Record<CardSize, { label: string; width: number; height
 export const STICKER_SIZES: StickerSize[] = [30, 40, 50];
 
 /** 스티커 아래 작품명 영역 높이(mm) */
-export const STICKER_CAPTION_HEIGHT = 7;
+export const STICKER_CAPTION_HEIGHT = 8;
 
 /** 이보다 작은 QR은 인식이 불안정하다(mm). */
 export const MIN_RECOMMENDED_QR_MM = 25;
@@ -92,7 +92,7 @@ export function templateGeometry(
     };
   }
   const card = CARD_SIZES[opts.cardSize];
-  const qr = { business: 34, a6: 42, square: 40 }[opts.cardSize];
+  const qr = { business: 38, a6: 64, square: 42 }[opts.cardSize];
   return { item: { width: card.width, height: card.height }, qr };
 }
 

@@ -112,7 +112,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
       return;
     }
     if (failed) {
-      toast.error("올리지 못한 사진이 있어요. 다시 올리거나 빼 주세요.");
+      toast.error("올리지 못한 사진이 있습니다. 다시 올리거나 빼 주세요.");
       return;
     }
     setSaving(true);
@@ -138,7 +138,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
     setBaseline(current);
     setErrors({});
     setSavedFlash(true);
-    toast.success(result.data.created ? "작품을 등록했어요. 이제 QR 코드를 인쇄할 수 있어요." : "저장했어요.");
+    toast.success(result.data.created ? "작품을 등록했습니다. 이제 QR 코드를 인쇄할 수 있습니다." : "저장했습니다.");
     if (result.data.created) {
       setIsNew(false);
       router.replace(`/admin/artworks/${fields.id}`, { scroll: false });
@@ -188,7 +188,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
   const doneImages = images.filter((i) => i.status === "done" && i.data);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-32 pt-5 sm:px-6 sm:pt-8">
+    <div className="w-full px-4 pb-32 pt-5 sm:px-6 sm:pt-7 lg:px-8">
       {/* 머리말 */}
       <div className="flex items-center gap-3">
         <Link
@@ -235,10 +235,10 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px] xl:gap-12">
-        {/* 입력 폼 */}
-        <div className={cn("space-y-6", mobileTab !== "form" && "hidden lg:block")}>
-          <Section title="작품 사진" hint="첫 번째 사진이 대표 사진이 되어 목록·명제표·공유 미리보기에 쓰여요.">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] xl:gap-8">
+        {/* 입력 폼: 넓은 화면에서는 2×2, 같은 줄의 카드는 높이를 맞춘다 */}
+        <div className={cn("grid content-start gap-6 2xl:grid-cols-2", mobileTab !== "form" && "hidden lg:grid")}>
+          <Section title="작품 사진" hint="첫 번째 사진이 대표 사진이 되어 목록·명제표·공유 미리보기에 쓰입니다.">
             <ImageUploader
               artworkId={fields.id}
               storageMode={storageMode}
@@ -275,43 +275,53 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
             )}
           </Section>
 
-          <Section title="기본 정보">
-            <div className="space-y-5">
-              <TextField
-                label="작품명"
-                value={fields.title}
-                onChange={(e) => set("title", e.target.value)}
-                maxLength={80}
-                placeholder="예) 봄날의 정원"
-                error={errors.title}
-                autoFocus={isNew}
-              />
-              <ArtistsInput value={fields.artists} onChange={(v) => set("artists", v)} error={errors.artists ?? firstMatching(errors, "artists.")} />
-              <div className="grid gap-5 sm:grid-cols-2">
-                <TextField label="재료" optional value={fields.material} onChange={(e) => set("material", e.target.value)} maxLength={60} placeholder="예) 종이에 수채" error={errors.material} />
-                <TextField label="크기" optional value={fields.size} onChange={(e) => set("size", e.target.value)} maxLength={60} placeholder="예) 40×30cm" error={errors.size} />
-              </div>
+          <Section title="공개와 QR 코드" className="2xl:col-start-2 2xl:row-start-1">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Switch checked={fields.isPublished} onChange={(v) => set("isPublished", v)} label={fields.isPublished ? "관람객에게 공개 중" : "아직 준비 중 (비공개)"} />
+              <p className="text-[13px] text-ink-faint sm:max-w-[55%] sm:text-right">
+                비공개일 때 QR을 찍으면 ‘작품 이야기를 준비하고 있습니다’ 화면이 나타납니다. QR을 먼저 인쇄해 붙여도 괜찮습니다.
+              </p>
             </div>
+            <Divider />
+            <QrPanel id={fields.id} title={fields.title} saved={!isNew} />
           </Section>
 
-          <Section title="작품 이야기">
+          <Section title="작품 정보">
+            <div className="space-y-5">
+                <TextField
+                  label="작품명"
+                  value={fields.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  maxLength={80}
+                  placeholder="예) 봄날의 정원"
+                  error={errors.title}
+                  autoFocus={isNew}
+                />
+                <ArtistsInput value={fields.artists} onChange={(v) => set("artists", v)} error={errors.artists ?? firstMatching(errors, "artists.")} />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <TextField label="재료" optional value={fields.material} onChange={(e) => set("material", e.target.value)} maxLength={60} placeholder="예) 종이에 수채" error={errors.material} />
+                  <TextField label="크기" optional value={fields.size} onChange={(e) => set("size", e.target.value)} maxLength={60} placeholder="예) 40×30cm" error={errors.size} />
+                </div>
+            </div>
+            <Divider />
             <TextArea
               label="설명"
               optional
               value={fields.description}
               onChange={(e) => set("description", e.target.value)}
               maxLength={3000}
-              placeholder="작품을 만든 이야기, 작가의 생각, 재미있는 과정 등을 적어 주세요. 줄을 바꾸면 문단이 나뉘어요."
+              placeholder="작품을 만든 이야기, 작가의 생각, 재미있는 과정 등을 적어 주세요. 줄을 바꾸면 문단이 나뉩니다."
               error={errors.description}
-              hint="짧은 문장으로 나눠 쓰면 휴대폰에서 읽기 편하고, 읽어주기 기능도 더 자연스러워요."
+              hint="짧은 문장으로 나눠 쓰면 휴대폰에서 읽기 편하고, 읽어주기 기능도 더 자연스럽습니다."
             />
             <div className="mt-4 rounded-2xl bg-paper-deep/40 px-4 py-3.5">
               <Switch checked={fields.ttsEnabled} onChange={(v) => set("ttsEnabled", v)} label="녹음이 없을 때 ‘읽어주기’ 버튼 보여주기" />
-              <p className="mt-1.5 pl-[60px] text-[13px] leading-relaxed text-ink-faint">휴대폰이 설명을 소리 내어 읽어 줘요. 목소리 녹음이 있으면 녹음이 먼저 나와요.</p>
+              <p className="mt-1.5 pl-[60px] text-[13px] leading-relaxed text-ink-faint">휴대폰이 설명을 소리 내어 읽어 줍니다. 목소리 녹음이 있으면 녹음이 먼저 재생됩니다.</p>
             </div>
           </Section>
 
-          <Section title="작가의 목소리" hint="학생이 직접 작품을 소개하는 목소리를 담아 보세요. 선택 사항이에요.">
+          <Section title="소리와 영상" hint="모두 선택 사항입니다. 넣으면 관람객 화면에 듣기·영상 영역이 생깁니다.">
+            <SubHead title="작가의 목소리" hint="학생이 직접 작품을 소개하는 목소리를 담아 보세요." />
             <AudioRecorder
               artworkId={fields.id}
               storageMode={storageMode}
@@ -320,9 +330,8 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
               onUploaded={(u) => sessionUploads.current.add(u)}
               onBusyChange={setAudioBusy}
             />
-          </Section>
-
-          <Section title="영상" hint="제작 과정이나 인터뷰 영상이 유튜브에 있다면 주소를 붙여넣어 주세요. 선택 사항이에요.">
+            <Divider />
+            <SubHead title="영상" hint="제작 과정이나 인터뷰 영상이 유튜브에 있다면 주소를 붙여넣어 주세요." />
             <TextField
               label="유튜브 주소"
               optional
@@ -339,25 +348,12 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
                   <div className="mt-3 flex items-center gap-3 rounded-2xl bg-success-mist/60 p-2.5 pr-4">
                     <img src={youTubeThumbnail(youtubeId)} alt="" className="h-14 w-24 rounded-lg object-cover" />
                     <p className="flex items-center gap-1.5 text-[14px] font-semibold text-success">
-                      <IconCheck size={16} strokeWidth={2.6} /> 영상을 찾았어요
+                      <IconCheck size={16} strokeWidth={2.6} /> 영상을 찾았습니다
                     </p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-          </Section>
-
-          <Section title="공개">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Switch checked={fields.isPublished} onChange={(v) => set("isPublished", v)} label={fields.isPublished ? "관람객에게 공개 중" : "아직 준비 중 (비공개)"} />
-              <p className="text-[13px] text-ink-faint sm:max-w-[55%] sm:text-right">
-                비공개일 때 QR을 찍으면 ‘작품 이야기를 준비하고 있어요’ 화면이 보여요. QR을 먼저 인쇄해 붙여도 괜찮아요.
-              </p>
-            </div>
-          </Section>
-
-          <Section title="QR 코드">
-            <QrPanel id={fields.id} title={fields.title} saved={!isNew} />
           </Section>
         </div>
 
@@ -391,9 +387,9 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
   );
 }
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+function Section({ title, hint, children, className }: { title: string; hint?: string; children: ReactNode; className?: string }) {
   return (
-    <section className="deckle rounded-[26px] px-5 py-6 sm:px-7 sm:py-7">
+    <section className={cn("deckle rounded-[26px] px-5 py-6 sm:px-7 sm:py-7", className)}>
       <h2 className="flex items-center gap-2.5 font-serif text-[1.2rem] font-bold text-ink">
         <span className="h-4 w-1 rounded-full bg-blue" aria-hidden />
         {title}
@@ -402,6 +398,19 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
       <div className="mt-5">{children}</div>
     </section>
   );
+}
+
+function SubHead({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="mb-3.5">
+      <h3 className="text-[15.5px] font-bold text-ink">{title}</h3>
+      {hint && <p className="mt-0.5 text-[13px] leading-relaxed text-ink-faint">{hint}</p>}
+    </div>
+  );
+}
+
+function Divider() {
+  return <hr className="my-6 border-0 border-t border-dashed border-paper-edge" />;
 }
 
 function SaveStatus({ dirty, saving, flash, uploading }: { dirty: boolean; saving: boolean; flash: boolean; uploading: boolean }) {

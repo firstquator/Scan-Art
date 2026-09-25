@@ -20,7 +20,7 @@ const PREVIEW_BOTS = [
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: PREVIEW_BOTS, allow: ["/a/", "/$", "/opengraph-image"], disallow: "/admin" },
+      { userAgent: PREVIEW_BOTS, allow: ["/a/", "/exhibition"], disallow: "/admin" },
       { userAgent: "*", disallow: "/" },
     ],
   };

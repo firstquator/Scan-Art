@@ -4,14 +4,16 @@ import { forwardRef, useRef, type ButtonHTMLAttributes, type PointerEvent, type 
 import { tap } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "paper";
+type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger" | "danger-soft" | "paper";
 type Size = "sm" | "md" | "lg" | "icon";
 
 const variants: Record<Variant, string> = {
   primary:
     "bg-blue text-paper-light shadow-[0_1px_0_rgb(255_255_255/0.2)_inset,0_6px_16px_-6px_rgb(42_92_170/0.55)] hover:bg-blue-deep",
   secondary: "bg-blue-mist text-blue-deep hover:bg-[#cfdcef]",
+  outline: "border border-blue/35 bg-paper-light text-blue-deep hover:border-blue/60 hover:bg-blue-mist/50",
   ghost: "bg-transparent text-ink-soft hover:bg-paper-deep/70 hover:text-ink",
+  "danger-soft": "border border-danger/20 bg-danger-mist/70 text-danger hover:border-danger/40 hover:bg-danger-mist",
   danger: "bg-danger text-paper-light hover:bg-[#9a3826] shadow-[0_6px_16px_-6px_rgb(180_67_47/0.5)]",
   paper: "hanji-surface text-ink paper-shadow hover:shadow-[var(--shadow-lift)] border border-paper-edge/70",
 };

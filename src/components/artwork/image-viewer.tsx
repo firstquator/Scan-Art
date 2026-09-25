@@ -176,7 +176,7 @@ function ViewerBody({ images, startIndex, title, onClose }: Omit<ImageViewerProp
       </div>
 
       <p className="relative z-10 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 text-center text-sm text-white/70">
-        {zoomed ? "두 번 톡 치면 원래 크기로 돌아가요" : images.length > 1 ? "옆으로 밀어 넘기고, 아래로 쓸어내려 닫아요" : "아래로 쓸어내려 닫아요"}
+        {zoomed ? "두 번 톡 치면 원래 크기로 돌아갑니다" : images.length > 1 ? "옆으로 밀어 넘기고, 아래로 쓸어내려 닫습니다" : "아래로 쓸어내려 닫습니다"}
       </p>
     </motion.div>
   );

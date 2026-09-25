@@ -49,7 +49,7 @@ export function QrPanel({ id, title, saved }: { id: string; title: string; saved
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("작품 주소를 복사했어요.");
+      toast.success("작품 주소를 복사했습니다.");
     } catch {
       toast.error(messageFor("COPY_FAILED"));
     }
@@ -65,10 +65,10 @@ export function QrPanel({ id, title, saved }: { id: string; title: string; saved
       </div>
       <div className="min-w-0 flex-1 space-y-3">
         <p className="break-all rounded-xl bg-paper-deep/60 px-3 py-2 font-mono text-[13px] text-ink-soft">{url}</p>
-        {!saved && <p className="text-[13.5px] text-ink-faint">저장하면 이 QR 코드가 바로 작동해요. 주소는 앞으로도 바뀌지 않아요.</p>}
+        {!saved && <p className="text-[13.5px] text-ink-faint">저장하면 이 QR 코드가 바로 작동합니다. 주소는 앞으로도 바뀌지 않습니다.</p>}
         {wrongOrigin && (
           <p className="rounded-xl bg-danger-mist/70 px-3 py-2 text-[13px] text-danger">
-            지금 접속한 주소와 QR에 들어가는 주소가 달라요. 최종 사이트 주소가 맞는지 확인한 뒤 인쇄해 주세요.
+            지금 접속한 주소와 QR에 들어가는 주소가 다릅니다. 최종 사이트 주소가 맞는지 확인한 뒤 인쇄해 주세요.
           </p>
         )}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

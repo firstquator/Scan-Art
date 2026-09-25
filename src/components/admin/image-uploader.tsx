@@ -88,7 +88,7 @@ export function ImageUploader({ artworkId, storageMode, images, setImages, onUpl
       toast.error(messageFor("IMAGE_LIMIT"));
       return;
     }
-    if (files.length > room) toast.info(`사진은 ${MAX_IMAGES}장까지예요. 앞의 ${room}장만 올릴게요.`);
+    if (files.length > room) toast.info(`사진은 ${MAX_IMAGES}장까지 올릴 수 있습니다. 앞의 ${room}장만 올립니다.`);
 
     const entries = files.slice(0, room).map((file) => ({
       key: nanoid(8),
@@ -177,7 +177,7 @@ export function ImageUploader({ artworkId, storageMode, images, setImages, onUpl
 
         {images.length === 0 && (
           <p className="pointer-events-none mt-3 text-center text-[13.5px] text-ink-faint">
-            사진을 여기로 끌어다 놓거나 눌러서 골라 주세요. 첫 번째 사진이 대표 사진이 돼요.
+            사진을 여기로 끌어다 놓거나 눌러서 골라 주세요. 첫 번째 사진이 대표 사진이 됩니다.
           </p>
         )}
 
@@ -200,7 +200,7 @@ export function ImageUploader({ artworkId, storageMode, images, setImages, onUpl
           type="button"
           onClick={() => cameraRef.current?.click()}
           disabled={full}
-          className="flex h-11 items-center gap-2 rounded-2xl bg-blue-mist px-4 text-[14.5px] font-semibold text-blue-deep transition-[background-color,transform] hover:bg-[#cfdcef] active:scale-[0.97] disabled:opacity-40 sm:hidden"
+          className="flex h-11 items-center gap-2 rounded-2xl bg-blue px-4 text-[14.5px] font-semibold text-paper-light shadow-[0_6px_14px_-6px_rgb(42_92_170/0.6)] transition-[background-color,transform] hover:bg-blue-deep active:scale-[0.97] disabled:opacity-40 sm:hidden"
         >
           <IconCamera size={19} /> 카메라로 찍기
         </button>
@@ -208,12 +208,12 @@ export function ImageUploader({ artworkId, storageMode, images, setImages, onUpl
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={full}
-          className="flex h-11 items-center gap-2 rounded-2xl border border-paper-edge bg-paper-light/80 px-4 text-[14.5px] font-semibold text-ink transition-[background-color,transform] hover:bg-paper-deep/60 active:scale-[0.97] disabled:opacity-40"
+          className="flex h-11 items-center gap-2 rounded-2xl border border-blue/25 bg-blue-mist px-4 text-[14.5px] font-semibold text-blue-deep transition-[background-color,border-color,transform] hover:border-blue/45 hover:bg-[#cfdcef] active:scale-[0.97] disabled:opacity-40"
         >
           <IconImage size={19} /> 앨범에서 고르기
         </button>
         <span className="tabular ml-auto text-[13px] text-ink-faint">
-          {images.length} / {MAX_IMAGES}장 · 자동으로 WebP 변환
+          {images.length} / {MAX_IMAGES}장
         </span>
       </div>
       {error && <p className="mt-2 text-sm font-medium text-danger">{error}</p>}
@@ -338,12 +338,12 @@ function shortError(code: string): string {
     case "IMAGE_UNSUPPORTED":
       return "읽을 수 없는 사진";
     case "FILE_TOO_LARGE":
-      return "파일이 너무 커요";
+      return "파일이 너무 큽니다";
     case "NETWORK":
-      return "연결이 불안정해요";
+      return "연결이 불안정합니다";
     case "UNAUTHORIZED":
       return "다시 로그인 필요";
     default:
-      return "올리지 못했어요";
+      return "올리지 못했습니다";
   }
 }

@@ -40,7 +40,7 @@ describe("artworkSchema", () => {
 
   it("잘못된 유튜브 주소를 알려준다", () => {
     expect(errorsOf({ ...base, youtubeUrl: "https://example.com" })).toEqual({
-      youtubeUrl: "유튜브 영상 주소가 올바르지 않아요.",
+      youtubeUrl: "유튜브 영상 주소가 올바르지 않습니다.",
     });
   });
 
@@ -55,7 +55,7 @@ describe("artworkSchema", () => {
       bytes: 10,
     };
     const errors = errorsOf({ ...base, images: [image] });
-    expect(errors["images.0.urlLg"]).toBe("파일 주소가 올바르지 않아요.");
+    expect(errors["images.0.urlLg"]).toBe("파일 주소가 올바르지 않습니다.");
   });
 
   it("Vercel Blob 주소는 허용한다", () => {
@@ -86,7 +86,7 @@ describe("settingsSchema", () => {
     const result = settingsSchema.safeParse({ ...settings, endDate: "2026-09-01" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(toFieldErrors(result.error)).toEqual({ endDate: "끝나는 날짜가 시작 날짜보다 빨라요." });
+      expect(toFieldErrors(result.error)).toEqual({ endDate: "끝나는 날짜가 시작 날짜보다 빠릅니다." });
     }
   });
 

@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 const control =
   "w-full rounded-2xl border border-paper-edge bg-paper-light/90 px-4 text-[16px] text-ink shadow-[var(--shadow-inset)] " +
   "placeholder:text-ink-faint/80 transition-[border-color,box-shadow,background-color] duration-200 " +
-  "hover:border-[#cfc2a6] focus:border-blue focus:bg-white focus:shadow-[0_0_0_4px_rgb(42_92_170/0.14)] focus:outline-none";
+  "hover:border-[#cfc2a6] focus:border-blue/60 focus:bg-white focus:shadow-[0_0_0_3px_rgb(42_92_170/0.08)] focus:outline-none";
 
 interface FieldShellProps {
   label: string;

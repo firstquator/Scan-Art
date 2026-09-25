@@ -5,6 +5,13 @@ export function artworkUrl(id: string): string {
   return `${SITE_URL}/a/${id}`;
 }
 
+/** 관람객용 전시 표지 경로 */
+export const EXHIBITION_PATH = "/exhibition";
+
+export function exhibitionUrl(): string {
+  return `${SITE_URL}${EXHIBITION_PATH}`;
+}
+
 export function artworkPath(id: string): string {
   return `/a/${id}`;
 }

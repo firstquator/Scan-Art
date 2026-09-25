@@ -12,6 +12,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { IconArrowLeft, IconChevronLeft, IconChevronRight, IconSpeaker, IconStop, IconUser } from "@/components/ui/icons";
 import { ArtImage } from "./art-image";
 import { ArtworkGallery } from "./artwork-gallery";
+import { ScrollCue } from "./scroll-cue";
 import { AudioPlayer } from "./audio-player";
 import { Description, TextSizeControl } from "./description";
 import { ShareButton } from "./share-button";
@@ -147,7 +148,7 @@ export function ArtworkView({ artwork, prev, next, index, total, exhibitionTitle
 
           <footer className="mt-16 flex flex-col items-center gap-3 text-center">
             {!preview && (
-              <Link href="/" transitionTypes={["nav-back"]} className="brush-underline text-[15px] font-semibold text-blue">
+              <Link href="/exhibition" transitionTypes={["nav-back"]} className="brush-underline text-[15px] font-semibold text-blue">
                 전시 전체 작품 보기
               </Link>
             )}
@@ -156,6 +157,7 @@ export function ArtworkView({ artwork, prev, next, index, total, exhibitionTitle
             </p>
           </footer>
         </div>
+        <ScrollCue />
       </main>
     </div>
   );
@@ -183,9 +185,10 @@ function TopBar({
   return (
     <header
       className={cn(
-        "z-30 transition-[background-color,box-shadow,backdrop-filter] duration-300",
-        preview ? "sticky top-0" : "sticky top-0 pt-[env(safe-area-inset-top)]",
-        scrolled && !preview ? "bg-paper/80 shadow-[0_1px_0_rgb(120_100_60/0.12)] backdrop-blur-md" : "bg-transparent",
+        // 늘 불투명한 헤더: 스크롤해도 사진·글이 비쳐 겹쳐 보이지 않는다.
+        "sticky top-0 z-30 border-b border-paper-edge/80 bg-paper/95 backdrop-blur-md transition-shadow duration-300",
+        !preview && "pt-[env(safe-area-inset-top)]",
+        scrolled ? "shadow-[0_6px_18px_-10px_rgb(70_52_24/0.35)]" : "shadow-[0_1px_0_rgb(255_255_255/0.6)_inset]",
       )}
     >
       <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-3 @2xl:px-5">
@@ -196,7 +199,7 @@ function TopBar({
           </span>
         ) : (
           <Link
-            href="/"
+            href="/exhibition"
             transitionTypes={["nav-back"]}
             className="flex min-w-0 items-center gap-1.5 rounded-full px-2 py-2 text-sm font-semibold text-ink-soft transition-colors hover:bg-paper-deep/70 hover:text-ink"
           >
@@ -249,8 +252,8 @@ function TtsButton({ speaking, onStart, onStop }: { speaking: boolean; onStart: 
         </AnimatePresence>
       </span>
       <span className="min-w-0">
-        <span className="block font-hand text-[1.55rem] leading-none text-blue-deep">{speaking ? "읽는 중이에요" : "작품 이야기 읽어주기"}</span>
-        <span className="mt-1.5 block text-sm text-ink-soft">{speaking ? "다시 누르면 멈춰요" : "누르면 설명을 소리 내어 읽어 드려요"}</span>
+        <span className="block font-hand text-[1.55rem] leading-none text-blue-deep">{speaking ? "읽는 중입니다" : "작품 이야기 읽어주기"}</span>
+        <span className="mt-1.5 block text-sm text-ink-soft">{speaking ? "다시 누르면 멈춥니다" : "누르면 설명을 소리 내어 읽어 드립니다"}</span>
       </span>
     </button>
   );

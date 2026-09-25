@@ -37,8 +37,8 @@ export function useLeaveGuard(dirty: boolean, onDiscard: () => void) {
       e.preventDefault();
       e.stopPropagation();
       const leave = await confirm({
-        title: "저장하지 않고 나갈까요?",
-        description: "지금까지 고친 내용이 사라져요. 나가기 전에 ‘저장’을 누르면 안전하게 남길 수 있어요.",
+        title: "저장하지 않고 나가시겠습니까?",
+        description: "지금까지 고친 내용이 사라집니다. 나가기 전에 ‘저장’을 누르면 안전하게 남길 수 있습니다.",
         confirmLabel: "저장하지 않고 나가기",
         cancelLabel: "계속 편집",
         tone: "danger",

@@ -117,7 +117,7 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
       setElapsed(secs);
       if (secs >= MAX_AUDIO_SECONDS) {
         stop();
-        toast.info("3분이 되어 녹음을 멈췄어요.");
+        toast.info("3분이 되어 녹음을 멈췄습니다.");
         return;
       }
       analyser.getByteTimeDomainData(data);
@@ -182,7 +182,7 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
       onUploaded(url);
       onChange({ url, duration: Math.round(duration), bytes: blob.size });
       setPhase({ kind: "idle" });
-      toast.success("목소리를 담았어요. 저장하면 관람객이 들을 수 있어요.");
+      toast.success("목소리를 담았습니다. 저장하면 관람객이 들을 수 있습니다.");
     } catch (error) {
       toast.fromError(error);
       setPhase({ kind: "idle" });
@@ -211,7 +211,7 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
                 <span className="absolute inset-0 animate-ping rounded-full bg-danger/70" />
                 <span className="relative h-3 w-3 rounded-full bg-danger" />
               </span>
-              <span className="text-[15px] font-semibold text-ink">녹음하고 있어요</span>
+              <span className="text-[15px] font-semibold text-ink">녹음하고 있습니다</span>
               <span className="tabular ml-auto font-mono text-lg font-semibold text-blue-deep">
                 {formatDuration(elapsed)} <span className="text-sm text-ink-faint">/ 3:00</span>
               </span>
@@ -256,10 +256,10 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
                   다시 녹음
                 </InkButton>
               )}
-              <InkButton variant="ghost" size="sm" icon={<IconUpload size={16} />} onClick={() => fileRef.current?.click()}>
+              <InkButton variant="outline" size="sm" icon={<IconUpload size={16} />} onClick={() => fileRef.current?.click()}>
                 파일로 바꾸기
               </InkButton>
-              <InkButton variant="ghost" size="sm" icon={<IconTrash size={16} />} onClick={() => onChange(null)} className="ml-auto text-danger hover:bg-danger-mist hover:text-danger">
+              <InkButton variant="danger-soft" size="sm" icon={<IconTrash size={16} />} onClick={() => onChange(null)} className="ml-auto">
                 녹음 빼기
               </InkButton>
             </div>
@@ -276,7 +276,7 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
               </span>
               <span>
                 <span className="block font-hand text-[1.5rem] leading-none text-blue-deep">목소리 녹음하기</span>
-                <span className="mt-1.5 block text-[13.5px] text-ink-soft">학생이 직접 작품을 소개해요 (3분까지)</span>
+                <span className="mt-1.5 block text-[13.5px] text-ink-soft">학생이 직접 작품을 소개합니다 (3분까지)</span>
               </span>
             </button>
             <button
@@ -306,7 +306,7 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
       <Modal
         open={micHelp !== null}
         onClose={() => setMicHelp(null)}
-        title={micHelp === "MIC_DENIED" ? "마이크 권한이 필요해요" : micHelp === "MIC_NOT_FOUND" ? "마이크를 찾을 수 없어요" : "이 브라우저에서는 녹음할 수 없어요"}
+        title={micHelp === "MIC_DENIED" ? "마이크 권한이 필요합니다" : micHelp === "MIC_NOT_FOUND" ? "마이크를 찾을 수 없습니다" : "이 브라우저에서는 녹음할 수 없습니다"}
         description={micHelp ? messageFor(micHelp) : undefined}
         size="md"
         footer={
@@ -328,14 +328,14 @@ export function AudioRecorder({ artworkId, storageMode, audio, onChange, onUploa
       >
         {micHelp === "MIC_DENIED" && (
           <ol className="list-decimal space-y-2 rounded-2xl bg-paper-deep/50 py-4 pl-9 pr-4 text-[14.5px] leading-relaxed text-ink">
-            <li>주소창 왼쪽의 자물쇠(또는 설정) 아이콘을 눌러요.</li>
-            <li>‘마이크’를 ‘허용’으로 바꿔요.</li>
-            <li>페이지를 새로고침한 뒤 다시 녹음 버튼을 눌러요.</li>
-            <li>아이폰은 ‘설정 → 사파리(또는 크롬) → 마이크’에서도 허용할 수 있어요.</li>
+            <li>주소창 왼쪽의 자물쇠(또는 설정) 아이콘을 누릅니다.</li>
+            <li>‘마이크’를 ‘허용’으로 바꿉니다.</li>
+            <li>페이지를 새로고침한 뒤 다시 녹음 버튼을 누릅니다.</li>
+            <li>아이폰은 ‘설정 → 사파리(또는 크롬) → 마이크’에서도 허용할 수 있습니다.</li>
           </ol>
         )}
         {micHelp === "RECORDING_UNSUPPORTED" && (
-          <p className="text-[14.5px] leading-relaxed text-ink-soft">휴대폰의 음성 메모 앱으로 녹음한 뒤, 그 파일을 올려도 괜찮아요.</p>
+          <p className="text-[14.5px] leading-relaxed text-ink-soft">휴대폰의 음성 메모 앱으로 녹음한 뒤, 그 파일을 올려도 괜찮습니다.</p>
         )}
       </Modal>
     </div>

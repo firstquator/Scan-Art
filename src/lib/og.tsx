@@ -1,11 +1,13 @@
 import "server-only";
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import sharp from "sharp";
 import { readMedia } from "@/lib/storage/server";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
-const PAPER = "#f7f3ea";
+const PAPER = "#f6f0e3";
 const INK = "#2a2926";
 const INK_SOFT = "#6b665c";
 const BLUE = "#2a5caa";
@@ -40,21 +42,16 @@ async function fonts(text: string) {
 
 let paperCache: string | null = null;
 
-/** 한지 결 바탕(잔 노이즈) PNG. 한 번 만들어 재사용한다. */
+/** 사이트와 같은 한지 타일(public/textures/hanji.webp)을 1200×630에 깔아 JPEG로 만든다. 한 번 만들어 재사용한다. */
 async function paperTexture(): Promise<string> {
   if (paperCache) return paperCache;
-  const noise = await sharp({
-    create: { width: OG_SIZE.width, height: OG_SIZE.height, channels: 3, background: "#808080", noise: { type: "gaussian", mean: 128, sigma: 40 } },
-  })
-    .greyscale()
-    .blur(0.6)
-    .png()
+  const tilePath = path.join(process.cwd(), "public", "textures", "hanji.webp");
+  const tile = await sharp(await readFile(tilePath)).resize(640, 640).toBuffer();
+  const jpeg = await sharp({ create: { width: OG_SIZE.width, height: OG_SIZE.height, channels: 3, background: PAPER } })
+    .composite([{ input: tile, tile: true, left: 0, top: 0 }])
+    .jpeg({ quality: 86, mozjpeg: true })
     .toBuffer();
-  const png = await sharp({ create: { width: OG_SIZE.width, height: OG_SIZE.height, channels: 4, background: PAPER } })
-    .composite([{ input: noise, blend: "soft-light" }])
-    .png({ compressionLevel: 9 })
-    .toBuffer();
-  paperCache = `data:image/png;base64,${png.toString("base64")}`;
+  paperCache = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
   return paperCache;
 }
 

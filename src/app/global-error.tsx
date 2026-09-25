@@ -10,7 +10,7 @@ export default function GlobalError() {
           minHeight: "100dvh",
           display: "grid",
           placeItems: "center",
-          background: "#f7f3ea",
+          background: "#f6f0e3",
           color: "#2a2926",
           fontFamily: "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
           padding: 24,
@@ -18,7 +18,7 @@ export default function GlobalError() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 24, marginBottom: 12 }}>잠시 문제가 생겼어요</h1>
+          <h1 style={{ fontSize: 24, marginBottom: 12 }}>잠시 문제가 생겼습니다</h1>
           <p style={{ color: "#6b665c", lineHeight: 1.7 }}>잠시 후 다시 시도해 주세요.</p>
           <button
             type="button"

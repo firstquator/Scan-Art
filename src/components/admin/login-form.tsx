@@ -8,7 +8,7 @@ import { IconAlert, IconEye, IconEyeOff } from "@/components/ui/icons";
 import { inputClass } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 
-export function LoginForm({ devHint }: { devHint: string | null }) {
+export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, null);
   const [visible, setVisible] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
@@ -75,11 +75,6 @@ export function LoginForm({ devHint }: { devHint: string | null }) {
         들어가기
       </InkButton>
 
-      {devHint && (
-        <p className="mt-5 rounded-xl bg-blue-mist/70 px-4 py-3 text-[13px] leading-relaxed text-blue-deep">
-          로컬 개발 환경이에요. 기본 비밀번호는 <b className="font-mono">{devHint}</b> 입니다. 운영에서는 ADMIN_PASSWORD 환경변수를 꼭 설정해 주세요.
-        </p>
-      )}
     </form>
   );
 }

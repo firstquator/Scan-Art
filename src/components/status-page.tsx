@@ -23,7 +23,7 @@ export function StatusPage({
         <div className="mt-8 flex flex-col items-center gap-3">
           {action ?? (
             <Link
-              href="/"
+              href="/exhibition"
               className="inline-flex h-12 items-center justify-center rounded-2xl bg-blue px-6 font-semibold text-paper-light shadow-[0_6px_16px_-6px_rgb(42_92_170/0.55)] transition-[background-color,transform] hover:bg-blue-deep active:scale-[0.97]"
             >
               전시 작품 둘러보기

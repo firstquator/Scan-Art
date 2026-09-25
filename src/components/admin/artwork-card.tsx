@@ -1,10 +1,11 @@
 "use client";
 
+import { useDndMonitor } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 import { ArtImage } from "@/components/artwork/art-image";
 import { Switch } from "@/components/ui/switch";
 import { IconCheck, IconEye, IconFilm, IconGrip, IconImage, IconMic, IconPencil, IconTrash } from "@/components/ui/icons";
@@ -27,7 +28,7 @@ const REVEAL = 148;
 
 /**
  * 관리자 작품 카드.
- * - 손잡이를 끌어 순서 바꾸기(@dnd-kit)
+ * - 카드 어디든 잡고 끌어 순서 바꾸기(@dnd-kit). 키보드는 손잡이 버튼에서 스페이스바로.
  * - 휴대폰에서 카드를 왼쪽으로 밀면 공개 전환·삭제 버튼이 나온다
  */
 export function ArtworkCard({ item, order, sortable, selected, onToggleSelect, onTogglePublished, onDelete }: ArtworkCardProps) {
@@ -38,6 +39,34 @@ export function ArtworkCard({ item, order, sortable, selected, onToggleSelect, o
   const x = useMotionValue(0);
   const actionsOpacity = useTransform(x, [-REVEAL, -40, 0], [1, 0.4, 0]);
   const [opened, setOpened] = useState(false);
+  // 끌고 난 직후의 클릭(링크 이동·버튼)은 무시한다. 카드를 내려놓았는데 편집 화면이 열리면 안 된다.
+  const draggedAt = useRef(0);
+  const dragging = useRef(false);
+  useDndMonitor({
+    onDragStart: () => {
+      dragging.current = true;
+      animate(x, 0, { duration: 0.15 });
+      setOpened(false);
+    },
+    onDragEnd: () => {
+      dragging.current = false;
+      draggedAt.current = Date.now();
+    },
+    onDragCancel: () => {
+      dragging.current = false;
+      draggedAt.current = Date.now();
+    },
+  });
+
+  // 카드 전체에는 마우스·터치로 끄는 동작만, 키보드 조작은 손잡이 버튼에만 붙인다(버튼 안에 버튼이 생기지 않게).
+  const { onKeyDown: keyboardListener, ...pointerListeners } = (listeners ?? {}) as Record<string, (e: unknown) => void>;
+
+  function swallowClickAfterDrag(e: MouseEvent) {
+    if (Date.now() - draggedAt.current < 250) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
 
   function settle(open: boolean) {
     setOpened(open);
@@ -86,13 +115,16 @@ export function ArtworkCard({ item, order, sortable, selected, onToggleSelect, o
         style={{ x }}
         onPanEnd={onPanEnd}
         onPan={(_, info) => {
-          if (window.matchMedia("(min-width: 640px)").matches) return;
+          if (dragging.current || window.matchMedia("(min-width: 640px)").matches) return;
           if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) return;
           const base = opened ? -REVEAL : 0;
           x.set(Math.max(-REVEAL - 30, Math.min(0, base + info.offset.x)));
         }}
+        {...(sortable ? pointerListeners : {})}
+        onClickCapture={swallowClickAfterDrag}
         className={cn(
           "deckle group relative touch-pan-y rounded-[22px] p-2.5 transition-shadow duration-300 hover:shadow-[var(--shadow-lift)]",
+          sortable && "cursor-grab active:cursor-grabbing",
           selected && "ring-[2.5px] ring-blue ring-offset-2 ring-offset-paper",
         )}
       >
@@ -170,9 +202,10 @@ export function ArtworkCard({ item, order, sortable, selected, onToggleSelect, o
               type="button"
               ref={setActivatorNodeRef}
               {...attributes}
-              {...listeners}
+              onKeyDown={keyboardListener}
               aria-label={`${item.title} 순서 옮기기`}
-              className="-mr-1 flex h-10 w-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-xl text-ink-faint transition-colors hover:bg-paper-deep hover:text-ink active:cursor-grabbing"
+              title="카드를 끌어서 순서를 바꿀 수 있습니다"
+              className="-mr-1 flex h-10 w-9 shrink-0 cursor-grab items-center justify-center rounded-xl text-ink-faint transition-colors hover:bg-paper-deep hover:text-ink active:cursor-grabbing"
             >
               <IconGrip size={20} />
             </button>

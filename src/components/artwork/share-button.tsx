@@ -22,7 +22,7 @@ export function ShareButton({ url, title, text, className }: { url: string; titl
     }
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("링크를 복사했어요. 원하는 곳에 붙여넣어 주세요.");
+      toast.success("링크를 복사했습니다. 원하는 곳에 붙여넣어 주세요.");
     } catch {
       toast.error(messageFor("COPY_FAILED"));
     }

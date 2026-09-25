@@ -65,7 +65,7 @@ export function AudioPlayer({ src, duration: initialDuration, label = "작가의
     try {
       await audio.play();
     } catch {
-      toast.error("소리를 재생하지 못했어요. 휴대폰의 무음 모드를 확인한 뒤 다시 눌러 주세요.");
+      toast.error("소리를 재생하지 못했습니다. 휴대폰의 무음 모드를 확인한 뒤 다시 눌러 주세요.");
     }
   }
 

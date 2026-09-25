@@ -48,7 +48,7 @@ export function ArtistsInput({ value, onChange, error }: ArtistsInputProps) {
         onClick={() => inputRef.current?.focus()}
         className={cn(
           "flex min-h-12 w-full cursor-text flex-wrap items-center gap-1.5 rounded-2xl border bg-paper-light/90 px-2 py-2 shadow-[var(--shadow-inset)] transition-[border-color,box-shadow]",
-          "focus-within:border-blue focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgb(42_92_170/0.14)]",
+          "focus-within:border-blue/60 focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgb(42_92_170/0.08)]",
           error ? "border-danger" : "border-paper-edge",
         )}
       >
@@ -110,7 +110,7 @@ export function ArtistsInput({ value, onChange, error }: ArtistsInputProps) {
           {error}
         </p>
       ) : (
-        <p className="text-[13px] text-ink-faint">실명이나 “3반 친구들”처럼 자유롭게 적을 수 있어요. 쉼표로 여러 명을 한 번에 넣을 수 있어요.</p>
+        <p className="text-[13px] text-ink-faint">실명이나 “3반 친구들”처럼 자유롭게 적을 수 있습니다. 쉼표로 여러 명을 한 번에 넣을 수 있습니다.</p>
       )}
     </div>
   );

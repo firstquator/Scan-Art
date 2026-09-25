@@ -7,7 +7,7 @@ import { loadPublishedArtworks, loadSettings } from "@/lib/data/public";
 import { nanumPen } from "@/lib/fonts";
 import { formatPeriod } from "@/lib/format";
 import { splitParagraphs } from "@/lib/sentences";
-import { SITE_URL } from "@/lib/site";
+import { exhibitionUrl } from "@/lib/site";
 
 export const revalidate = 86400;
 
@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       title: settings.title,
       description: settings.subtitle || `${settings.organizer} 학생 작품 전시`,
-      url: SITE_URL,
+      url: exhibitionUrl(),
       siteName: settings.title,
       locale: "ko_KR",
     },

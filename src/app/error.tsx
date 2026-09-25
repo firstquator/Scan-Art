@@ -17,7 +17,7 @@ export default function ErrorPage({ error, retry }: { error: Error & { digest?: 
           <span className="font-serif text-3xl font-bold">!</span>
         </InkMark>
       }
-      title="잠시 문제가 생겼어요"
+      title="잠시 문제가 생겼습니다"
       action={
         <InkButton icon={<IconRefresh size={18} />} onClick={() => retry()}>
           다시 불러오기

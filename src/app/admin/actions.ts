@@ -30,7 +30,7 @@ async function guarded<T>(fallback: ErrorCode, run: () => Promise<ActionResult<T
 }
 
 function revalidatePublic() {
-  revalidatePath("/");
+  revalidatePath("/exhibition");
   revalidatePath("/a/[id]", "page");
 }
 

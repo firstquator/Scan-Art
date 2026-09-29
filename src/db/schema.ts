@@ -1,9 +1,11 @@
 import { sql } from "drizzle-orm";
+import type { LabelText } from "@/lib/types";
 import {
   boolean,
   date,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -55,6 +57,8 @@ export const artworks = pgTable(
     bgmUrl: text("bgm_url"),
     bgmName: text("bgm_name").notNull().default(""),
     bgmBytes: integer("bgm_bytes").notNull().default(0),
+    /** 명제표에만 쓰는 글(작품 정보와 다르게 고친 항목만). 줄바꿈을 그대로 지킨다. */
+    labelText: jsonb("label_text").$type<LabelText>(),
     youtubeUrl: text("youtube_url").notNull().default(""),
     isPublished: boolean("is_published").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),

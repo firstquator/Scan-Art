@@ -110,6 +110,34 @@ export const settingsSchema = z
 
 export type SettingsInput = z.infer<typeof settingsSchema>;
 
+/** 명제표 글: 줄바꿈은 지키고 줄마다 앞뒤 공백만 정리한다. 빈 칸은 뺀다. */
+const labelLines = (max: number, label: string) =>
+  z
+    .string()
+    .max(max, { error: `${label}은(는) ${max}자까지 쓸 수 있습니다.` })
+    .transform((v) =>
+      v
+        .replace(/\r\n?/g, "\n")
+        .split("\n")
+        .map((l) => l.trim())
+        .join("\n")
+        .replace(/^\n+|\n+$/g, ""),
+    )
+    .optional();
+
+export const labelTextSchema = z
+  .object({
+    title: labelLines(120, "작품명"),
+    artists: labelLines(600, "작가"),
+    material: labelLines(120, "재료"),
+    size: labelLines(120, "크기"),
+  })
+  .transform((v) => {
+    // 작품 정보와 다르게 고친 항목만 온다. 빈 글("")은 '명제표에서 이 줄을 뺀다'는 뜻이다.
+    const entries = Object.entries(v).filter(([, text]) => typeof text === "string");
+    return entries.length ? (Object.fromEntries(entries) as Record<string, string>) : null;
+  });
+
 /** Zod 오류를 { "필드.경로": "한국어 문구" } 형태로 바꾼다. 첫 번째 문구만 남긴다. */
 export function toFieldErrors(error: z.ZodError): Record<string, string> {
   const result: Record<string, string> = {};

@@ -1,14 +1,15 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { Fragment, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { InkButton } from "@/components/ui/ink-button";
-import { Modal } from "@/components/ui/modal";
+import { Modal, useConfirm } from "@/components/ui/modal";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
-import { IconAlert, IconCheck, IconChevronLeft, IconChevronRight, IconExpand, IconImage, IconPrinter } from "@/components/ui/icons";
+import { IconAlert, IconCheck, IconChevronLeft, IconChevronRight, IconExpand, IconImage, IconPrinter, IconRefresh } from "@/components/ui/icons";
 import { ArtImage } from "@/components/artwork/art-image";
-import type { AdminArtworkSummary } from "@/lib/types";
+import type { AdminArtworkSummary, LabelText } from "@/lib/types";
 import { messageFor } from "@/lib/errors";
 import { joinArtists } from "@/lib/format";
 import {
@@ -26,6 +27,7 @@ import {
   type TemplateKind,
 } from "@/lib/print-layout";
 import { cn } from "@/lib/cn";
+import { saveLabelTextAction } from "@/app/admin/actions";
 import { useAdmin } from "./admin-context";
 import { FitText } from "./fit-text";
 import { QrCode } from "./qr-code";
@@ -37,7 +39,15 @@ const noopSubscribe = () => () => {};
 /** 미리보기 A4가 화면 높이 안에 들어오도록 하는 최대 너비 */
 const SHEET_MAX_WIDTH = "min(100%, calc((100dvh - 280px) * 0.7071))";
 
-export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkSummary[]; preselected: string[] }) {
+export function PrintStudio({ artworks: initialArtworks, preselected }: { artworks: AdminArtworkSummary[]; preselected: string[] }) {
+  // 명제표 글을 저장하면 바로 반영한다(서버에서 새 목록이 오면 그것을 따른다).
+  const [labelEdits, setLabelEdits] = useState<{ source: AdminArtworkSummary[]; map: Record<string, LabelText | null> }>({ source: initialArtworks, map: {} });
+  const edits = useMemo(() => (labelEdits.source === initialArtworks ? labelEdits.map : {}), [labelEdits, initialArtworks]);
+  const router = useRouter();
+  const artworks = useMemo(
+    () => initialArtworks.map((a) => (a.id in edits ? { ...a, label: edits[a.id] } : a)),
+    [initialArtworks, edits],
+  );
   const { siteUrl, exhibitionTitle, organizer } = useAdmin();
   const toast = useToast();
   const [kind, setKind] = useState<TemplateKind>("card");
@@ -62,11 +72,12 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
 
   const { item, qr } = templateGeometry(kind, { cardSize, stickerSize, stickerCaption });
 
-  const renderItem = (art: AdminArtworkSummary) =>
+  const renderItem = (art: AdminArtworkSummary, label: LabelText | null = art.label) =>
     kind === "card" ? (
       <LabelCard
         // 작품이나 내용이 바뀌면 글자 크기 맞춤을 처음부터 다시 한다(앞 작품의 맞춤 상태를 물려받지 않게).
-        key={`${cardSize}|${art.id}|${art.title}|${art.artists.join("/")}|${art.material}|${art.size}`}
+        key={`${cardSize}|${art.id}|${JSON.stringify(labelContent(art, label))}`}
+        label={label}
         art={art}
         url={`${siteUrl}/a/${art.id}`}
         size={cardSize}
@@ -77,7 +88,7 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
         organizer={organizer}
       />
     ) : (
-      <LabelSticker art={art} url={`${siteUrl}/a/${art.id}`} size={stickerSize} caption={stickerCaption} cutMarks={cutMarks} />
+      <LabelSticker art={art} label={label} url={`${siteUrl}/a/${art.id}`} size={stickerSize} caption={stickerCaption} cutMarks={cutMarks} />
     );
   const layout = computeSheetLayout(item, { margin: 8, gap: cutMarks ? 4 : 2 });
   const pages = paginate(targets, layout.perPage);
@@ -365,13 +376,17 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
         width={item.width}
         height={item.height}
         onClose={() => setZoomId(null)}
+        editable={kind === "card"}
         onMove={(delta) => {
           const next = targets[zoomIndex + delta];
           if (next) setZoomId(next.id);
         }}
-      >
-        {zoomArt && renderItem(zoomArt)}
-      </ItemZoom>
+        onSaved={(id, label) => {
+          setLabelEdits({ source: initialArtworks, map: { ...edits, [id]: label } });
+          router.refresh();
+        }}
+        render={renderItem}
+      />
 
       <style>{`
         @media print {
@@ -395,50 +410,79 @@ function ItemZoom({
   total,
   width,
   height,
+  editable,
   onClose,
   onMove,
-  children,
+  onSaved,
+  render,
 }: {
   art: AdminArtworkSummary | null;
   index: number;
   total: number;
   width: number;
   height: number;
+  /** 명제표 카드일 때만 글을 고칠 수 있다(스티커는 작품명만 찍힌다). */
+  editable: boolean;
   onClose: () => void;
   onMove: (delta: number) => void;
-  children: ReactNode;
+  onSaved: (id: string, label: LabelText | null) => void;
+  render: (art: AdminArtworkSummary, label: LabelText | null) => ReactNode;
 }) {
   const open = art !== null;
+  const confirm = useConfirm();
+  // 고치는 중인 글(저장 전). 작품이 바뀌면 편집기가 새로 만들어지며 다시 채워진다.
+  const [draft, setDraft] = useState<{ id: string; label: LabelText | null } | null>(null);
+  const draftLabel = art && draft?.id === art.id ? draft.label : (art?.label ?? null);
+  const dirty = !!art && draft?.id === art.id && JSON.stringify(draft.label) !== JSON.stringify(art.label ?? null);
+
+  // 저장하지 않은 글이 있으면 넘기거나 닫기 전에 묻는다.
+  async function leave(then: () => void) {
+    if (dirty) {
+      const ok = await confirm({
+        title: "고친 글을 저장하지 않았습니다",
+        description: "저장하지 않고 넘어가면 방금 고친 내용이 사라집니다.",
+        confirmLabel: "저장하지 않고 넘어가기",
+        cancelLabel: "계속 고치기",
+        tone: "danger",
+      });
+      if (!ok) return;
+    }
+    setDraft(null);
+    then();
+  }
+  const leaveRef = useRef(leave);
   const onMoveRef = useRef(onMove);
   useLayoutEffect(() => {
+    leaveRef.current = leave;
     onMoveRef.current = onMove;
   });
   useLayoutEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") onMoveRef.current(-1);
-      if (e.key === "ArrowRight") onMoveRef.current(1);
+      // 글을 고치는 중에는 ←/→가 글자 사이를 움직여야 한다.
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, [contenteditable]")) return;
+      if (e.key === "ArrowLeft") void leaveRef.current(() => onMoveRef.current(-1));
+      if (e.key === "ArrowRight") void leaveRef.current(() => onMoveRef.current(1));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
-
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={() => void leave(onClose)}
       size="lg"
       title={art?.title ?? ""}
       description={`실제 크기 ${width}×${height}mm · 인쇄되는 모습 그대로입니다`}
       footer={
         <div className="flex w-full items-center justify-between gap-2">
-          <InkButton variant="ghost" icon={<IconChevronLeft size={18} />} disabled={index <= 0} onClick={() => onMove(-1)}>
+          <InkButton variant="ghost" icon={<IconChevronLeft size={18} />} disabled={index <= 0} onClick={() => void leave(() => onMove(-1))}>
             이전
           </InkButton>
           <span className="tabular text-[14px] font-semibold text-ink-soft">
             {index + 1} / {total}
           </span>
-          <InkButton variant="ghost" disabled={index >= total - 1} onClick={() => onMove(1)}>
+          <InkButton variant="ghost" disabled={index >= total - 1} onClick={() => void leave(() => onMove(1))}>
             다음 <IconChevronRight size={18} />
           </InkButton>
         </div>
@@ -446,10 +490,149 @@ function ItemZoom({
     >
       <div className="rounded-2xl bg-paper-deep/50 p-3 sm:p-5">
         <ScaledMm width={width} height={height}>
-          {children}
+          {art && render(art, draftLabel)}
         </ScaledMm>
       </div>
+      {art && editable && (
+        <LabelEditor
+          key={art.id}
+          art={art}
+          label={draftLabel}
+          dirty={dirty}
+          onChange={(label) => setDraft({ id: art.id, label })}
+          onSaved={(label) => {
+            setDraft(null);
+            onSaved(art.id, label);
+          }}
+        />
+      )}
     </Modal>
+  );
+}
+
+type LabelField = "title" | "artists" | "material" | "size";
+
+/** 작품 정보 그대로의 명제표 글(작가는 한 줄에 한 명) */
+function originalLabelText(art: AdminArtworkSummary): Record<LabelField, string> {
+  return { title: art.title, artists: art.artists.join("\n"), material: art.material, size: art.size };
+}
+
+/** 줄마다 앞뒤 공백을 정리한다(저장 규칙과 같게). */
+function tidyLines(v: string): string {
+  return v
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((l) => l.trim())
+    .join("\n")
+    .replace(/^\n+|\n+$/g, "");
+}
+
+/** 명제표 글 고치기: 작품 정보와 달라진 칸만 모아 명제표용 글로 저장한다. */
+function LabelEditor({
+  art,
+  label,
+  dirty,
+  onChange,
+  onSaved,
+}: {
+  art: AdminArtworkSummary;
+  label: LabelText | null;
+  dirty: boolean;
+  onChange: (label: LabelText | null) => void;
+  onSaved: (label: LabelText | null) => void;
+}) {
+  const original = originalLabelText(art);
+  const [values, setValues] = useState<Record<LabelField, string>>(() => ({
+    title: label?.title ?? original.title,
+    artists: label?.artists ?? original.artists,
+    material: label?.material ?? original.material,
+    size: label?.size ?? original.size,
+  }));
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  function toLabel(next: Record<LabelField, string>): LabelText | null {
+    const out: LabelText = {};
+    for (const key of Object.keys(next) as LabelField[]) {
+      const v = tidyLines(next[key]);
+      if (v !== tidyLines(original[key])) out[key] = v;
+    }
+    return Object.keys(out).length ? out : null;
+  }
+
+  function set(key: LabelField, v: string) {
+    const next = { ...values, [key]: v };
+    setValues(next);
+    onChange(toLabel(next));
+  }
+
+  async function save(next: LabelText | null) {
+    setSaving(true);
+    const result = await saveLabelTextAction(art.id, next);
+    setSaving(false);
+    if (!result.ok) {
+      toast.error(result.fieldErrors ? (Object.values(result.fieldErrors)[0] ?? result.message) : result.message);
+      return;
+    }
+    onSaved(next);
+    toast.success(next ? "명제표 글을 저장했습니다." : "작품 정보 그대로 되돌렸습니다.");
+  }
+
+  const changed = (key: LabelField) => tidyLines(values[key]) !== tidyLines(original[key]);
+  const fields: { key: LabelField; label: string; hint: string; rows: number }[] = [
+    { key: "title", label: "작품명", hint: "비우면 원래 작품명을 씁니다", rows: 2 },
+    { key: "artists", label: "작가", hint: "한 줄에 한 명(또는 원하는 곳에서 줄바꿈)", rows: 3 },
+    { key: "material", label: "재료", hint: "비우면 명제표에서 뺍니다", rows: 2 },
+    { key: "size", label: "크기", hint: "비우면 명제표에서 뺍니다", rows: 1 },
+  ];
+
+  return (
+    <section className="mt-5 rounded-2xl border border-paper-edge bg-paper-light/70 p-4 sm:p-5" aria-label="명제표 글 고치기">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <h3 className="text-[15.5px] font-bold text-ink">명제표 글 고치기</h3>
+        <span className="rounded-full bg-blue-mist px-2.5 py-0.5 text-[12px] font-semibold text-blue-deep">명제표에만 적용</span>
+      </div>
+      <p className="mt-1 text-[13px] leading-relaxed text-ink-faint">
+        Enter로 줄을 바꾸면 명제표에서도 그 자리에서 줄이 바뀝니다. 작품 페이지의 글은 바뀌지 않습니다.
+      </p>
+
+      <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
+        {fields.map((f) => (
+          <label key={f.key} className={cn("block", f.key === "title" || f.key === "artists" ? "sm:col-span-2" : "")}>
+            <span className="mb-1.5 flex items-center gap-2 text-[14px] font-semibold text-ink">
+              {f.label}
+              {changed(f.key) && <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-label="고침" />}
+              <span className="ml-auto text-[12px] font-normal text-ink-faint">{f.hint}</span>
+            </span>
+            <textarea
+              value={values[f.key]}
+              rows={f.rows}
+              onChange={(e) => set(f.key, e.target.value)}
+              className="block w-full resize-y rounded-xl border border-paper-edge bg-paper-light px-3 py-2.5 text-[15px] leading-snug text-ink [field-sizing:content] focus:border-blue focus:outline-none focus:ring-4 focus:ring-blue/10"
+            />
+          </label>
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <InkButton
+          variant="ghost"
+          size="sm"
+          icon={<IconRefresh size={16} />}
+          disabled={saving || (!art.label && !label)}
+          onClick={() => {
+            setValues(original);
+            if (art.label) void save(null);
+            else onChange(null);
+          }}
+        >
+          원래대로
+        </InkButton>
+        <InkButton size="sm" className="ml-auto" icon={<IconCheck size={16} strokeWidth={2.4} />} loading={saving} disabled={!dirty} onClick={() => void save(label)}>
+          {dirty ? "명제표 글 저장" : "저장됨"}
+        </InkButton>
+      </div>
+    </section>
   );
 }
 
@@ -529,6 +712,27 @@ function CutFrame({ show }: { show: boolean }) {
 }
 
 /** 카드 크기별 글자·여백 설정(mm) */
+/** 명제표에 실제로 찍힐 글: 명제표용으로 고친 글이 있으면 그것을, 없으면 작품 정보를 쓴다. */
+function labelContent(art: AdminArtworkSummary, label: LabelText | null | undefined) {
+  return {
+    title: label?.title || art.title,
+    artists: label?.artists != null ? label.artists.split("\n").filter(Boolean) : art.artists,
+    manualArtists: label?.artists != null,
+    material: label?.material ?? art.material,
+    size: label?.size ?? art.size,
+  };
+}
+
+/** 직접 나눈 줄: 그 자리에서만 줄을 바꾸고, 줄 안에서는 저절로 바꾸지 않는다(넘치면 글자 크기를 줄인다). */
+function ManualLines({ lines }: { lines: string[] }) {
+  return lines.map((line, i) => (
+    <Fragment key={i}>
+      {i > 0 && <br />}
+      <span className="whitespace-nowrap">{line}</span>
+    </Fragment>
+  ));
+}
+
 const CARD_TYPE: Record<
   CardSize,
   { pad: number; label: number; title: number; artist: number; artistLines: number; meta: number; hint: number; gap: number }
@@ -547,6 +751,7 @@ function LabelCard({
   cutMarks,
   exhibitionTitle,
   organizer,
+  label,
 }: {
   art: AdminArtworkSummary;
   url: string;
@@ -556,8 +761,12 @@ function LabelCard({
   cutMarks: boolean;
   exhibitionTitle: string;
   organizer: string;
+  /** 명제표에만 쓰는 글(없으면 작품 정보 그대로). 줄바꿈은 그 자리에서 줄을 바꾼다. */
+  label?: LabelText | null;
 }) {
   const t = CARD_TYPE[size];
+  const text = labelContent(art, label);
+  const textKey = JSON.stringify(text);
   const vertical = size === "square";
   const mm = (v: number) => `${v}mm`;
 
@@ -580,7 +789,7 @@ function LabelCard({
         : // 모든 명제표에 똑같이 적힌 전시명을 이 카드에서만 빼고, 작품명을 다시 크게 맞춘다.
           { shrink: 1, hideLabel: true },
     );
-  }, [shrink, hideLabel, fontTick, art.title, art.artists, art.material, art.size]);
+  }, [shrink, hideLabel, fontTick, textKey]);
   useLayoutEffect(() => {
     let alive = true;
     document.fonts?.ready.then(() => alive && setFontTick((n) => n + 1));
@@ -589,7 +798,9 @@ function LabelCard({
     };
   }, []);
   const titleMax = t.title * shrink;
-  const artistsInLines = art.artists.length <= t.artistLines;
+  // 직접 줄을 나눈 작가는 적은 그대로 한 줄씩 둔다.
+  const artistsInLines = text.manualArtists || text.artists.length <= t.artistLines;
+  const titleLines = text.title.includes("\n") ? text.title.split("\n") : null;
 
   const qrBox = (
     <div className="shrink-0 self-center rounded-[1.8mm] bg-white shadow-[0_0.4mm_1.2mm_rgb(70_52_24/0.18)]" style={{ padding: mm(1.8) }}>
@@ -663,61 +874,74 @@ function LabelCard({
               max={titleMax}
               // 작품명은 작가 이름보다 작아지지 않는다(글의 위계를 지킨다).
               min={Math.max(titleMax * 0.5, t.artist * 1.12)}
-              lines={1}
-              fallbackLines={2}
-              wrapBelow={0.72}
+              lines={titleLines ? titleLines.length : 1}
+              fallbackLines={titleLines ? undefined : 2}
+              wrapBelow={titleLines ? undefined : 0.72}
               lineHeight={1.16}
               className="w-full font-serif font-bold tracking-[-0.015em]"
               style={{ marginTop: hideLabel ? 0 : mm(t.label * 0.6) }}
             >
-              {art.title}
+              {titleLines ? <ManualLines lines={titleLines} /> : text.title}
             </FitText>
-            {art.artists.length > 0 && (
+            {text.artists.length > 0 && (
               // 작가: 쪽빛 세로줄 옆에 한 사람씩 한 줄로. 많으면(4명 이상) ‘ · ’로 이어 쓴다.
               <FitText
                 max={t.artist}
                 min={t.artist * 0.55}
-                lines={artistsInLines ? art.artists.length : 1}
-                fallbackLines={artistsInLines ? Math.min(art.artists.length * 2, 4) : t.artistLines}
+                lines={artistsInLines ? text.artists.length : 1}
+                fallbackLines={text.manualArtists ? undefined : artistsInLines ? Math.min(text.artists.length * 2, 4) : t.artistLines}
                 wrapBelow={0.8}
                 lineHeight={1.28}
                 className={cn("w-full font-semibold text-[#3f3b34]", !vertical && "border-l-[0.55mm] border-[#b9cbe6]")}
                 style={{ marginTop: mm(t.artist * 0.55), paddingLeft: vertical ? undefined : mm(t.artist * 0.5) }}
               >
-                {art.artists.map((name, i) =>
+                {text.artists.map((name, i) =>
                   artistsInLines ? (
                     // 한 사람씩 한 줄. 이름이 아주 길면(단체명 등) 알맞은 크기에서 한 번 더 줄을 바꾼다.
-                    <span key={`${name}-${i}`} className="block">
+                    // 직접 줄을 나눴으면 적은 그대로 두고 글자 크기만 맞춘다.
+                    <span key={`${name}-${i}`} className={cn("block", text.manualArtists && "whitespace-nowrap")}>
                       {name}
                     </span>
                   ) : (
                     <Fragment key={`${name}-${i}`}>
                       <span className="whitespace-nowrap">
                         {name}
-                        {i < art.artists.length - 1 && <span className="text-[#9db3d6]"> ·</span>}
+                        {i < text.artists.length - 1 && <span className="text-[#9db3d6]"> ·</span>}
                       </span>
-                      {i < art.artists.length - 1 ? " " : ""}
+                      {i < text.artists.length - 1 ? " " : ""}
                     </Fragment>
                   ),
                 )}
               </FitText>
             )}
-            {(art.material || art.size) && (
+            {(text.material || text.size) && (
               <div style={{ marginTop: mm(t.meta * 0.75) }}>
                 {(
                   [
-                    ["재료", art.material],
-                    ["크기", art.size],
+                    ["재료", text.material],
+                    ["크기", text.size],
                   ] as const
                 )
                   .filter(([, v]) => v)
-                  .map(([label, value]) => (
-                    // 재료·크기는 늘 같은 크기: 길면 줄이지 않고 다음 줄로 넘긴다.
-                    <FitText key={label} max={t.meta} min={t.meta * 0.6} fallbackLines={2} wrapBelow={0.97} lineHeight={1.35} className="w-full text-[#57524a]">
-                      <span className="mr-[0.55em] font-bold text-[#2a5caa]">{label}</span>
-                      {value}
-                    </FitText>
-                  ))}
+                  .map(([name, value]) => {
+                    const lines = value.includes("\n") ? value.split("\n") : null;
+                    return (
+                      // 재료·크기는 늘 같은 크기: 길면 줄이지 않고 다음 줄로 넘긴다(직접 나눈 줄은 그대로).
+                      <FitText
+                        key={name}
+                        max={t.meta}
+                        min={t.meta * 0.6}
+                        lines={lines ? lines.length : 1}
+                        fallbackLines={lines ? undefined : 2}
+                        wrapBelow={lines ? undefined : 0.97}
+                        lineHeight={1.35}
+                        className="w-full text-[#57524a]"
+                      >
+                        <span className="mr-[0.55em] font-bold text-[#2a5caa]">{name}</span>
+                        {lines ? <ManualLines lines={lines} /> : value}
+                      </FitText>
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -732,7 +956,21 @@ function LabelCard({
   );
 }
 
-function LabelSticker({ art, url, size, caption, cutMarks }: { art: AdminArtworkSummary; url: string; size: StickerSize; caption: boolean; cutMarks: boolean }) {
+function LabelSticker({
+  art,
+  label,
+  url,
+  size,
+  caption,
+  cutMarks,
+}: {
+  art: AdminArtworkSummary;
+  label?: LabelText | null;
+  url: string;
+  size: StickerSize;
+  caption: boolean;
+  cutMarks: boolean;
+}) {
   return (
     <div className="relative flex h-full w-full flex-col items-center bg-white">
       <CutFrame show={cutMarks} />
@@ -743,7 +981,7 @@ function LabelSticker({ art, url, size, caption, cutMarks }: { art: AdminArtwork
         // 작품명은 한 줄: 길면 말줄임 대신 글자를 줄인다
         <div className="flex w-full items-center px-[1.5mm]" style={{ height: `${STICKER_CAPTION_HEIGHT}mm`, paddingBottom: "1mm" }}>
           <FitText max={Math.min(4.6, size / 8.5)} min={Math.min(4.6, size / 8.5) * 0.4} lineHeight={1.2} className="w-full text-center font-serif font-bold text-[#2a2926]">
-            {art.title}
+            {labelContent(art, label).title.replace(/\n/g, " ")}
           </FitText>
         </div>
       )}

@@ -15,6 +15,13 @@
       "when": 1790686942336,
       "tag": "0001_bgm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790722307789,
+      "tag": "0002_label_text",
+      "breakpoints": true
     }
   ]
 }

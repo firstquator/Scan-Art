@@ -9,6 +9,7 @@ import {
   deleteArtwork,
   reorderArtworks,
   saveArtwork,
+  setLabelText,
   setPublished,
 } from "@/lib/data/artworks";
 import { PUBLIC_DATA_TAG } from "@/lib/data/public";
@@ -16,7 +17,7 @@ import { saveSettings } from "@/lib/data/settings";
 import { AppError, fail, ok, toErrorCode, type ActionResult, type ErrorCode } from "@/lib/errors";
 import { isArtworkId } from "@/lib/ids";
 import { deleteMediaFiles } from "@/lib/storage/server";
-import { artworkSchema, settingsSchema, toFieldErrors } from "@/lib/validation";
+import { artworkSchema, labelTextSchema, settingsSchema, toFieldErrors } from "@/lib/validation";
 
 /** 관리자 확인 + 오류를 한국어 결과로 바꿔 주는 공통 포장 */
 async function guarded<T>(fallback: ErrorCode, run: () => Promise<ActionResult<T>>): Promise<ActionResult<T>> {
@@ -92,6 +93,18 @@ export async function setPublishedAction(id: string, isPublished: boolean): Prom
     if (!isArtworkId(id) || !(await setPublished(id, isPublished === true))) return fail("NOT_FOUND");
     revalidatePublic();
     revalidatePath("/admin");
+    return ok(undefined);
+  });
+}
+
+/** 명제표에만 쓰는 글 저장. 관람객 화면의 작품 정보는 바꾸지 않는다. */
+export async function saveLabelTextAction(id: string, input: unknown): Promise<ActionResult> {
+  return guarded("SAVE_FAILED", async () => {
+    if (!isArtworkId(id)) return fail("NOT_FOUND");
+    const parsed = input === null ? { success: true as const, data: null } : labelTextSchema.safeParse(input);
+    if (!parsed.success) return fail("VALIDATION", toFieldErrors(parsed.error));
+    if (!(await setLabelText(id, parsed.data))) return fail("NOT_FOUND");
+    revalidatePath("/admin/print");
     return ok(undefined);
   });
 }

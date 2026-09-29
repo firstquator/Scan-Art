@@ -31,11 +31,20 @@ export interface ArtworkLink {
   cover: ImageView | null;
 }
 
+/** 명제표에만 쓰는 글. 작품 정보와 다르게 고친 항목만 담는다. 작가는 한 줄에 한 명. */
+export interface LabelText {
+  title?: string;
+  artists?: string;
+  material?: string;
+  size?: string;
+}
+
 export interface AdminArtworkSummary extends ArtworkLink {
   isPublished: boolean;
   imageCount: number;
   hasAudio: boolean;
   hasVideo: boolean;
+  label: LabelText | null;
   material: string;
   size: string;
   updatedAt: string;

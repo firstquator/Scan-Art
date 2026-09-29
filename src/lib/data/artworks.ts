@@ -2,7 +2,7 @@ import "server-only";
 import { asc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { artworkImages, artworks, type Artwork, type ArtworkImage } from "@/db/schema";
-import type { AdminArtworkSummary, ArtworkLink, ArtworkView, ImageView } from "@/lib/types";
+import type { AdminArtworkSummary, ArtworkLink, ArtworkView, ImageView, LabelText } from "@/lib/types";
 import { resolveBgm } from "@/lib/bgm";
 import type { ArtworkInput, BgmInput } from "@/lib/validation";
 
@@ -130,6 +130,7 @@ export async function listAllArtworks(): Promise<AdminArtworkSummary[]> {
       imageCount: imgs.length,
       hasAudio: !!r.audioUrl,
       hasVideo: !!r.youtubeUrl,
+      label: r.labelText ?? null,
       material: r.material,
       size: r.size,
       updatedAt: r.updatedAt.toISOString(),
@@ -235,6 +236,13 @@ export async function deleteArtwork(id: string): Promise<string[] | null> {
   const db = await getDb();
   await db.delete(artworks).where(eq(artworks.id, id));
   return mediaUrlsOf(before);
+}
+
+/** 명제표에만 쓰는 글을 저장한다(null이면 작품 정보 그대로). 작품이 없으면 false. */
+export async function setLabelText(id: string, label: LabelText | null): Promise<boolean> {
+  const db = await getDb();
+  const rows = await db.update(artworks).set({ labelText: label }).where(eq(artworks.id, id)).returning({ id: artworks.id });
+  return rows.length > 0;
 }
 
 export async function setPublished(id: string, isPublished: boolean): Promise<boolean> {

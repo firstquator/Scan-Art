@@ -268,7 +268,7 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
                   </button>
                 </div>
 
-                <div className="print-sheets">
+                <div className="print-sheets relative">
                   {pages.map((items, pi) => (
                     <Sheet key={pi} visible={pi === currentPage}>
                       {items.map((art, i) => {
@@ -344,7 +344,7 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
           html, body { background: #fff !important; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print-sheets .sheet { display: block !important; box-shadow: none !important; margin: 0 !important; transform: none !important; break-after: page; }
-          .print-sheets .sheet-wrap:not(.hidden) .sheet, .print-sheets .sheet { break-inside: avoid; }
+          .print-sheets .sheet { break-inside: avoid; }
           .print-sheets > .sheet-wrap:last-child .sheet { break-after: auto; }
           html, body, body > div { min-height: 0 !important; }
         }
@@ -353,10 +353,21 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
   );
 }
 
-/** A4 한 장. 화면에서는 작업대 높이에 맞게 줄여 보여주고, 인쇄할 때는 실제 크기. */
+/**
+ * A4 한 장. 화면에서는 작업대 높이에 맞게 줄여 보여주고, 인쇄할 때는 실제 크기.
+ * 지금 보지 않는 장도 display:none으로 숨기지 않고 보이지 않게만 둔다:
+ * 숨기면 크기가 0으로 재어져 글자 크기 맞춤(FitText)이 틀어지고, 그대로 인쇄되어 글이 잘린다.
+ */
 function Sheet({ visible, children }: { visible: boolean; children: ReactNode }) {
   return (
-    <div className={cn("sheet-wrap", !visible && "hidden print:block")}>
+    <div
+      aria-hidden={!visible || undefined}
+      className={cn(
+        "sheet-wrap",
+        !visible &&
+          "pointer-events-none invisible absolute inset-x-0 top-0 h-0 overflow-hidden print:visible print:static print:h-auto print:overflow-visible",
+      )}
+    >
       <div className="mx-auto w-full print:!max-w-none" style={{ maxWidth: SHEET_MAX_WIDTH }}>
         <div className="relative w-full print:!aspect-auto print:w-auto" style={{ aspectRatio: `${A4.width} / ${A4.height}` }}>
           <div
@@ -392,11 +403,11 @@ function CutFrame({ show }: { show: boolean }) {
 /** 카드 크기별 글자·여백 설정(mm) */
 const CARD_TYPE: Record<
   CardSize,
-  { pad: number; label: number; title: number; titleLines: number; artist: number; artistLines: number; meta: number; hint: number; gap: number }
+  { pad: number; label: number; title: number; artist: number; artistLines: number; meta: number; hint: number; gap: number }
 > = {
-  business: { pad: 4.2, label: 2.7, title: 6.4, titleLines: 2, artist: 3.5, artistLines: 2, meta: 2.7, hint: 3.3, gap: 3.5 },
-  a6: { pad: 7.5, label: 4, title: 12.5, titleLines: 2, artist: 6, artistLines: 3, meta: 4.4, hint: 6, gap: 6.5 },
-  square: { pad: 6, label: 3.3, title: 8, titleLines: 2, artist: 4.4, artistLines: 2, meta: 3.3, hint: 4.2, gap: 3 },
+  business: { pad: 4.2, label: 2.7, title: 6.4, artist: 3.5, artistLines: 2, meta: 2.7, hint: 3.3, gap: 3.5 },
+  a6: { pad: 7.5, label: 4, title: 12.5, artist: 6, artistLines: 3, meta: 4.4, hint: 6, gap: 6.5 },
+  square: { pad: 6, label: 3.3, title: 8, artist: 4.4, artistLines: 2, meta: 3.3, hint: 4.2, gap: 3 },
 };
 
 function LabelCard({
@@ -485,11 +496,10 @@ function LabelCard({
             <FitText max={t.label} min={t.label * 0.6} fallbackLines={2} className="w-full font-bold tracking-[0.02em] text-[#2a5caa]">
               {size === "a6" ? `${organizer} · ${exhibitionTitle}` : exhibitionTitle}
             </FitText>
+            {/* 작품명은 무조건 한 줄: 길면 줄바꿈 대신 글자를 줄인다 */}
             <FitText
               max={t.title}
-              min={t.title * 0.55}
-              fallbackLines={t.titleLines}
-              wrapBelow={0.78}
+              min={t.title * 0.3}
               lineHeight={1.18}
               className="w-full font-serif font-bold tracking-[-0.01em]"
               style={{ marginTop: mm(t.label * 0.55) }}
@@ -544,12 +554,12 @@ function LabelSticker({ art, url, size, caption, cutMarks }: { art: AdminArtwork
         <QrCode value={url} label={`${art.title} QR 코드`} />
       </div>
       {caption && (
-        <p
-          className="w-full truncate px-[1.5mm] text-center font-serif font-bold text-[#2a2926]"
-          style={{ fontSize: `${Math.min(4.6, size / 8.5)}mm`, height: `${STICKER_CAPTION_HEIGHT}mm`, lineHeight: `${STICKER_CAPTION_HEIGHT - 2.5}mm` }}
-        >
-          {art.title}
-        </p>
+        // 작품명은 한 줄: 길면 말줄임 대신 글자를 줄인다
+        <div className="flex w-full items-center px-[1.5mm]" style={{ height: `${STICKER_CAPTION_HEIGHT}mm`, paddingBottom: "1mm" }}>
+          <FitText max={Math.min(4.6, size / 8.5)} min={Math.min(4.6, size / 8.5) * 0.4} lineHeight={1.2} className="w-full text-center font-serif font-bold text-[#2a2926]">
+            {art.title}
+          </FitText>
+        </div>
       )}
     </div>
   );

@@ -57,12 +57,27 @@ export function FitText({ children, max, min, lines = 1, fallbackLines, wrapBelo
       fits(min, fallbackLines ?? lines);
     };
 
-    fit();
+    // 폭이 0이면(화면에 아직 배치되지 않음) 잘못 재므로 건너뛰고, 크기가 생기면 다시 맞춘다.
+    let lastWidth = -1;
+    const refit = () => {
+      const width = el.parentElement?.clientWidth ?? 0;
+      if (width === 0 || width === lastWidth) return;
+      lastWidth = width;
+      fit();
+    };
+    refit();
     let alive = true;
     // 글꼴이 늦게 불러와지면 폭이 바뀌므로 한 번 더 맞춘다.
-    document.fonts?.ready.then(() => alive && fit());
+    document.fonts?.ready.then(() => {
+      if (!alive) return;
+      lastWidth = -1;
+      refit();
+    });
+    const ro = new ResizeObserver(refit);
+    if (el.parentElement) ro.observe(el.parentElement);
     return () => {
       alive = false;
+      ro.disconnect();
     };
   }, [children, max, min, lines, fallbackLines, wrapBelow, lineHeight]);
 

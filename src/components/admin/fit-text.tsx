@@ -40,7 +40,10 @@ export function FitText({ children, max, min, lines = 1, fallbackLines, wrapBelo
       // 안쪽 여백(padding)은 글 높이에서 뺀다(배경 띠처럼 여백이 있는 상자도 맞출 수 있게).
       const cs = getComputedStyle(el);
       const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-      const limit = sizeMm * PX_PER_MM * lineHeight * allowed + padY + 1;
+      // 글꼴(특히 명조)은 글자가 줄 높이 밖으로 1~2px 삐져나와 높이가 조금 더 재어진다.
+      // 반 줄까지는 여유로 봐 준다(줄이 하나 더 생기면 한 줄 높이만큼 늘어나므로 구분된다).
+      const line = sizeMm * PX_PER_MM * lineHeight;
+      const limit = line * allowed + padY + line * 0.5;
       return el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= limit;
     };
 

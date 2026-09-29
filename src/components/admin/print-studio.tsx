@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Fragment, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { InkButton } from "@/components/ui/ink-button";
 import { Modal } from "@/components/ui/modal";
 import { Switch } from "@/components/ui/switch";
@@ -277,6 +277,7 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
                           <div key={art.id} className="absolute" style={{ left: `${pos.x}mm`, top: `${pos.y}mm`, width: `${item.width}mm`, height: `${item.height}mm` }}>
                             {kind === "card" ? (
                               <LabelCard
+                                key={cardSize}
                                 art={art}
                                 url={`${siteUrl}/a/${art.id}`}
                                 size={cardSize}
@@ -405,9 +406,9 @@ const CARD_TYPE: Record<
   CardSize,
   { pad: number; label: number; title: number; artist: number; artistLines: number; meta: number; hint: number; gap: number }
 > = {
-  business: { pad: 4.2, label: 2.7, title: 6.4, artist: 3.5, artistLines: 2, meta: 2.7, hint: 3.3, gap: 3.5 },
-  a6: { pad: 7.5, label: 4, title: 12.5, artist: 6, artistLines: 3, meta: 4.4, hint: 6, gap: 6.5 },
-  square: { pad: 6, label: 3.3, title: 8, artist: 4.4, artistLines: 2, meta: 3.3, hint: 4.2, gap: 3 },
+  business: { pad: 4.2, label: 2.6, title: 6.4, artist: 3.3, artistLines: 3, meta: 2.8, hint: 3.3, gap: 3.5 },
+  a6: { pad: 7.5, label: 4, title: 12.5, artist: 5.6, artistLines: 3, meta: 4.4, hint: 6, gap: 6.5 },
+  square: { pad: 6, label: 3.3, title: 8, artist: 4.2, artistLines: 3, meta: 3.3, hint: 4.2, gap: 3 },
 };
 
 function LabelCard({
@@ -430,9 +431,30 @@ function LabelCard({
   organizer: string;
 }) {
   const t = CARD_TYPE[size];
-  const meta = [art.material, art.size].filter(Boolean).join(" · ");
   const vertical = size === "square";
   const mm = (v: number) => `${v}mm`;
+
+  // 명제표 전체가 넘치면(작가가 많거나 재료가 길 때) 재료·작가 → 작품명 순으로 조금씩 줄인다.
+  // 자식(FitText)들이 먼저 제 폭에 맞춘 뒤 여기서 높이를 재므로, 모든 글이 한 번에 맞춰진다.
+  const [shrink, setShrink] = useState(1);
+  const [fontTick, setFontTick] = useState(0);
+  const columnRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = columnRef.current;
+    if (!el || el.clientHeight === 0) return;
+    if (el.scrollHeight > el.clientHeight && shrink > 0.4) setShrink((k) => Math.round((k - 0.06) * 100) / 100);
+  }, [shrink, fontTick, art.title, art.artists, art.material, art.size]);
+  useLayoutEffect(() => {
+    let alive = true;
+    document.fonts?.ready.then(() => alive && setFontTick((n) => n + 1));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const titleMax = t.title * (0.4 + 0.6 * shrink);
+  const artistMax = t.artist * Math.max(0.7, shrink);
+  const metaMax = t.meta * Math.max(0.75, shrink);
+  const artistsInLines = art.artists.length <= t.artistLines;
 
   const qrBox = (
     <div className="shrink-0 self-center rounded-[1.8mm] bg-white shadow-[0_0.4mm_1.2mm_rgb(70_52_24/0.18)]" style={{ padding: mm(1.8) }}>
@@ -490,49 +512,74 @@ function LabelCard({
           justifyContent: vertical ? "space-between" : undefined,
         }}
       >
-        <div className={cn("flex min-w-0 flex-col justify-between", vertical ? "w-full flex-none items-center text-center" : "flex-1")}>
+        <div
+          ref={columnRef}
+          className={cn("flex min-h-0 min-w-0 flex-col justify-between overflow-hidden [&>*]:shrink-0", vertical ? "w-full flex-none items-center text-center" : "flex-1")}
+        >
           <div className={cn("w-full min-w-0", vertical && "text-center")}>
             {/* 모든 글은 잘라내지(…) 않고, 칸에 맞게 글자 크기를 줄인다 */}
             <FitText max={t.label} min={t.label * 0.6} fallbackLines={2} className="w-full font-bold tracking-[0.02em] text-[#2a5caa]">
               {size === "a6" ? `${organizer} · ${exhibitionTitle}` : exhibitionTitle}
             </FitText>
-            {/* 작품명은 무조건 한 줄: 길면 줄바꿈 대신 글자를 줄인다 */}
+            {/* 작품명: 한 줄로 알맞은 크기(약 72%)까지만 줄이고, 그래도 길면 두 줄로 나눠 크게 둔다 */}
             <FitText
-              max={t.title}
-              min={t.title * 0.3}
-              lineHeight={1.18}
-              className="w-full font-serif font-bold tracking-[-0.01em]"
-              style={{ marginTop: mm(t.label * 0.55) }}
+              max={titleMax}
+              min={titleMax * 0.5}
+              lines={1}
+              fallbackLines={2}
+              wrapBelow={0.72}
+              lineHeight={1.16}
+              className="w-full font-serif font-bold tracking-[-0.015em]"
+              style={{ marginTop: mm(t.label * 0.6) }}
             >
               {art.title}
             </FitText>
             {art.artists.length > 0 && (
+              // 작가: 쪽빛 세로줄 옆에 한 사람씩 한 줄로. 많으면(4명 이상) ‘ · ’로 이어 쓴다.
               <FitText
-                max={t.artist}
-                min={t.artist * 0.5}
-                lines={1}
-                fallbackLines={t.artistLines}
+                max={artistMax}
+                min={artistMax * 0.55}
+                lines={artistsInLines ? art.artists.length : 1}
+                fallbackLines={artistsInLines ? Math.min(art.artists.length * 2, 4) : t.artistLines}
                 wrapBelow={0.8}
-                lineHeight={1.3}
-                className="w-full font-semibold text-[#4b473f]"
-                style={{ marginTop: mm(t.artist * 0.4) }}
+                lineHeight={1.28}
+                className={cn("w-full font-semibold text-[#3f3b34]", !vertical && "border-l-[0.55mm] border-[#b9cbe6]")}
+                style={{ marginTop: mm(t.artist * 0.55), paddingLeft: vertical ? undefined : mm(t.artist * 0.5) }}
               >
-                {/* 이름 하나(예: "3반 친구들")는 절대 중간에서 나뉘지 않고, 이름과 이름 사이에서만 줄이 바뀐다 */}
-                {art.artists.map((name, i) => (
-                  <Fragment key={`${name}-${i}`}>
-                    <span className="whitespace-nowrap">
+                {art.artists.map((name, i) =>
+                  artistsInLines ? (
+                    // 한 사람씩 한 줄. 이름이 아주 길면(단체명 등) 알맞은 크기에서 한 번 더 줄을 바꾼다.
+                    <span key={`${name}-${i}`} className="block">
                       {name}
-                      {i < art.artists.length - 1 ? "," : ""}
                     </span>
-                    {i < art.artists.length - 1 ? " " : ""}
-                  </Fragment>
-                ))}
+                  ) : (
+                    <Fragment key={`${name}-${i}`}>
+                      <span className="whitespace-nowrap">
+                        {name}
+                        {i < art.artists.length - 1 && <span className="text-[#9db3d6]"> ·</span>}
+                      </span>
+                      {i < art.artists.length - 1 ? " " : ""}
+                    </Fragment>
+                  ),
+                )}
               </FitText>
             )}
-            {meta && (
-              <FitText max={t.meta} min={t.meta * 0.6} className="w-full text-[#7d776b]" style={{ marginTop: mm(t.meta * 0.45) }}>
-                {meta}
-              </FitText>
+            {(art.material || art.size) && (
+              <div style={{ marginTop: mm(t.meta * 0.75) }}>
+                {(
+                  [
+                    ["재료", art.material],
+                    ["크기", art.size],
+                  ] as const
+                )
+                  .filter(([, v]) => v)
+                  .map(([label, value]) => (
+                    <FitText key={label} max={metaMax} min={metaMax * 0.6} lineHeight={1.35} className="w-full text-[#57524a]">
+                      <span className="mr-[0.55em] font-bold text-[#2a5caa]">{label}</span>
+                      {value}
+                    </FitText>
+                  ))}
+              </div>
             )}
           </div>
           {!band && hint}

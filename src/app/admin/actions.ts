@@ -118,7 +118,7 @@ export async function discardUploadsAction(urls: string[]): Promise<ActionResult
     const db = await getDb();
     const [imgs, auds, cover] = await Promise.all([
       db.select({ a: artworkImages.urlLg, b: artworkImages.urlSm }).from(artworkImages),
-      db.select({ a: artworks.audioUrl }).from(artworks),
+      db.select({ a: artworks.audioUrl, b: artworks.bgmUrl }).from(artworks),
       db.select({ a: settings.coverUrlLg, b: settings.coverUrlSm }).from(settings),
     ]);
     const used = new Set<string>();
@@ -126,7 +126,10 @@ export async function discardUploadsAction(urls: string[]): Promise<ActionResult
       if (r.a) used.add(r.a);
       if (r.b) used.add(r.b);
     }
-    for (const r of auds) if (r.a) used.add(r.a);
+    for (const r of auds) {
+      if (r.a) used.add(r.a);
+      if (r.b) used.add(r.b);
+    }
     await deleteMediaFiles(urls.filter((u) => typeof u === "string" && !used.has(u)).slice(0, 200));
     return ok(undefined);
   });

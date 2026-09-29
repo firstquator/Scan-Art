@@ -21,6 +21,7 @@ export default function NewArtworkPage() {
         isPublished: true,
         images: [],
         audio: null,
+        bgm: { mode: "default" },
       }}
     />
   );

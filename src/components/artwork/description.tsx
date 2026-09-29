@@ -7,9 +7,9 @@ import { cn } from "@/lib/cn";
 import { tap } from "@/lib/haptics";
 
 const SIZES = [
-  { key: "base", label: "보통", className: "text-[17px] leading-[1.95]" },
-  { key: "lg", label: "크게", className: "text-[20px] leading-[1.9]" },
-  { key: "xl", label: "아주 크게", className: "text-[23.5px] leading-[1.85]" },
+  { key: "base", label: "보통", className: "text-[17px] leading-[1.72]" },
+  { key: "lg", label: "크게", className: "text-[20px] leading-[1.66]" },
+  { key: "xl", label: "아주 크게", className: "text-[23.5px] leading-[1.6]" },
 ] as const;
 
 type SizeKey = (typeof SIZES)[number]["key"];
@@ -80,15 +80,21 @@ export function TextSizeControl() {
   );
 }
 
-/** 설명글. 읽어주는 중이면 지금 문장을 쪽빛으로 강조한다. */
+/**
+ * 설명글. 첫 문단은 조금 크게 이끌어 주고, 나머지는 읽기 편한 줄 길이·간격으로 이어 쓴다.
+ * 읽어주는 중이면 지금 문장을 쪽빛으로 강조한다.
+ */
 export function Description({ paragraphs, activeSentence }: { paragraphs: Paragraph[]; activeSentence: number }) {
   const [size] = useTextSize();
   const sizeClass = SIZES.find((s) => s.key === size)?.className ?? SIZES[0].className;
 
   return (
-    <div className={cn("space-y-[1.1em] text-ink transition-[font-size] duration-300", sizeClass)}>
+    <div className={cn("relative mt-5 space-y-[0.8em] tracking-[-0.005em] text-ink/90 transition-[font-size] duration-300 [text-wrap:pretty]", sizeClass)}>
+      <span className="pointer-events-none absolute -left-1 -top-3 select-none font-serif text-[4.2rem] font-bold leading-none text-blue-mist" aria-hidden>
+        “
+      </span>
       {paragraphs.map((p, pi) => (
-        <p key={pi}>
+        <p key={pi} className={cn("relative", pi === 0 && "pt-6 text-[1.08em] font-medium leading-[1.62] text-ink")}>
           {p.sentences.map((s) => (
             <span
               key={s.index}

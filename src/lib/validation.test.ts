@@ -13,6 +13,7 @@ const base: ArtworkInput = {
   isPublished: false,
   images: [],
   audio: null,
+  bgm: { mode: "default" as const },
 };
 
 function errorsOf(input: unknown) {
@@ -62,6 +63,21 @@ describe("artworkSchema", () => {
     const url = "https://abc123.public.blob.vercel-storage.com/artworks/abcd2345/x-lg.webp";
     const image = { urlLg: url, urlSm: url, width: 10, height: 10, blurData: "data:image/webp;base64,AA", alt: "", bytes: 1 };
     expect(artworkSchema.safeParse({ ...base, images: [image] }).success).toBe(true);
+  });
+
+  it("사진은 24장까지 허용하고 25장부터 알려준다", () => {
+    const url = "https://abc123.public.blob.vercel-storage.com/artworks/abcd2345/x-lg.webp";
+    const image = { urlLg: url, urlSm: url, width: 10, height: 10, blurData: "data:image/webp;base64,AA", alt: "", bytes: 1 };
+    expect(artworkSchema.safeParse({ ...base, images: Array(24).fill(image) }).success).toBe(true);
+    expect(errorsOf({ ...base, images: Array(25).fill(image) }).images).toBe("사진은 24장까지 올릴 수 있습니다.");
+  });
+
+  it("배경음악: 기본·없음·직접 올린 파일을 받고, 남의 주소는 막는다", () => {
+    const url = "https://abc123.public.blob.vercel-storage.com/artworks/abcd2345/bgm-x.mp3";
+    expect(artworkSchema.safeParse({ ...base, bgm: { mode: "none" } }).success).toBe(true);
+    expect(artworkSchema.safeParse({ ...base, bgm: { mode: "custom", url, name: "우리 노래", bytes: 10 } }).success).toBe(true);
+    const errors = errorsOf({ ...base, bgm: { mode: "custom", url: "https://evil.example.com/a.mp3", name: "노래", bytes: 1 } });
+    expect(errors["bgm.url"]).toBe("파일 주소가 올바르지 않습니다.");
   });
 
   it("모든 오류 문구가 한국어다 (타입 오류 포함)", () => {

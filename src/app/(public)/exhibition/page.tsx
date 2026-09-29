@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import { ArtworkGrid } from "@/components/home/artwork-grid";
 import { ArtImage } from "@/components/artwork/art-image";
 import { PageTransition } from "@/components/page-transition";
@@ -6,8 +7,8 @@ import { Reveal } from "@/components/ui/reveal";
 import { loadPublishedArtworks, loadSettings } from "@/lib/data/public";
 import { nanumPen } from "@/lib/fonts";
 import { formatPeriod } from "@/lib/format";
-import { splitParagraphs } from "@/lib/sentences";
 import { exhibitionUrl } from "@/lib/site";
+import { cn } from "@/lib/cn";
 
 // 요청마다 그리되, 데이터는 lib/data/public.ts 캐시에서 읽는다(관리자가 바꾸면 즉시 반영).
 export const dynamic = "force-dynamic";
@@ -31,44 +32,46 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const [settings, artworks] = await Promise.all([loadSettings(), loadPublishedArtworks()]);
   const period = formatPeriod(settings.startDate, settings.endDate);
-  const intro = splitParagraphs(settings.intro);
+  const intro = introParagraphs(settings.intro);
+  // 짧은 첫 문단은 글머리 문장으로 크게 보여 준다.
+  const lead = intro.length > 1 && intro[0].join(" ").length <= 70 ? intro[0] : null;
+  const body = lead ? intro.slice(1) : intro;
+  const facts = [
+    period ? { label: "기간", value: period, tabular: true } : null,
+    settings.venue ? { label: "장소", value: settings.venue, tabular: false } : null,
+    artworks.length > 0 ? { label: "작품", value: `${artworks.length}점`, tabular: true } : null,
+  ].filter((f) => f !== null);
 
   return (
     <PageTransition>
       <div className={nanumPen.variable}>
-        <header className="relative isolate overflow-hidden pb-10 pt-[max(3.5rem,calc(env(safe-area-inset-top)+2.5rem))] sm:pb-14 sm:pt-20">
+        <header className="relative isolate overflow-hidden pb-9 pt-[max(3.25rem,calc(env(safe-area-inset-top)+2.25rem))] sm:pb-12 sm:pt-20">
           <div className="mx-auto max-w-4xl px-4 sm:px-5">
             <Reveal>
-              <p className="flex items-center gap-2.5 font-hand text-[1.7rem] leading-none text-blue-deep">
+              <p className="flex items-center gap-2.5 font-hand text-[1.6rem] leading-none text-blue-deep">
                 <Seal />
                 {settings.organizer}
               </p>
             </Reveal>
             <Reveal delay={0.08}>
-              <h1 className="mt-5 font-serif text-[2.6rem] font-bold leading-[1.15] tracking-[-0.03em] text-ink sm:text-[4rem]">
+              <h1 className="mt-4 font-serif text-[2.5rem] font-bold leading-[1.12] tracking-[-0.035em] text-ink sm:text-[3.9rem]">
                 {settings.title}
               </h1>
             </Reveal>
             {settings.subtitle && (
               <Reveal delay={0.14}>
-                <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft sm:text-xl">{settings.subtitle}</p>
+                <p className="mt-3 max-w-xl text-[1.1rem] leading-snug text-ink-soft sm:text-[1.3rem]">{settings.subtitle}</p>
               </Reveal>
             )}
-            {(period || settings.venue) && (
+            {facts.length > 0 && (
               <Reveal delay={0.2}>
-                <dl className="mt-7 flex flex-wrap gap-2.5 text-[15px]">
-                  {period && (
-                    <div className="flex items-center gap-2 rounded-full border border-paper-edge bg-paper-light/80 px-4 py-2 shadow-[var(--shadow-inset)]">
-                      <dt className="font-semibold text-blue">기간</dt>
-                      <dd className="tabular text-ink">{period}</dd>
+                <dl className="mt-6 inline-flex max-w-full flex-wrap gap-px overflow-hidden rounded-[18px] border border-paper-edge bg-paper-edge shadow-[var(--shadow-paper)]">
+                  {facts.map((f) => (
+                    <div key={f.label} className="flex min-w-0 grow flex-col justify-center bg-paper-light px-4 py-2.5 sm:grow-0 sm:px-5">
+                      <dt className="text-[11.5px] font-bold tracking-[0.08em] text-blue">{f.label}</dt>
+                      <dd className={cn("mt-0.5 text-[14.5px] font-semibold leading-tight text-ink sm:text-[15px]", f.tabular && "tabular")}>{f.value}</dd>
                     </div>
-                  )}
-                  {settings.venue && (
-                    <div className="flex items-center gap-2 rounded-full border border-paper-edge bg-paper-light/80 px-4 py-2 shadow-[var(--shadow-inset)]">
-                      <dt className="font-semibold text-blue">장소</dt>
-                      <dd className="text-ink">{settings.venue}</dd>
-                    </div>
-                  )}
+                  ))}
                 </dl>
               </Reveal>
             )}
@@ -78,29 +81,55 @@ export default async function HomePage() {
 
         <main className="mx-auto max-w-4xl px-4 pb-20 sm:px-5">
           {(settings.cover || intro.length > 0) && (
-            <Reveal className="mb-14">
-              <section
-                className={`deckle overflow-hidden rounded-[26px] ${settings.cover && intro.length > 0 ? "sm:grid sm:grid-cols-[1.1fr_1fr]" : ""}`}
-                aria-label="전시 소개"
-              >
-                {settings.cover && (
-                  <ArtImage
-                    image={settings.cover}
-                    alt={`${settings.title} 대표 사진`}
-                    sizes="(max-width: 640px) 100vw, 480px"
-                    priority
-                    className="aspect-[4/3] w-full sm:aspect-auto sm:h-full"
-                  />
-                )}
-                {intro.length > 0 && (
-                  <div className="space-y-4 px-6 py-7 text-[16.5px] leading-[1.9] text-ink sm:px-8 sm:py-9">
-                    {intro.map((p, i) => (
-                      <p key={i}>{p.sentences.map((s) => s.text).join(" ")}</p>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </Reveal>
+            <section className="mb-16" aria-label="전시 소개">
+              {settings.cover && (
+                <Reveal>
+                  {/* 표지는 글씨가 든 포스터일 수 있어 자르지 않고 원래 비율 그대로 건다. */}
+                  <figure className="deckle rounded-[24px] p-2 sm:p-2.5">
+                    <ArtImage
+                      image={settings.cover}
+                      alt={`${settings.title} 대표 사진`}
+                      sizes="(max-width: 900px) 100vw, 880px"
+                      priority
+                      fit="contain"
+                      className="w-full rounded-[17px]"
+                      style={{ aspectRatio: `${settings.cover.width} / ${settings.cover.height}` }}
+                    />
+                  </figure>
+                </Reveal>
+              )}
+
+              {intro.length > 0 && (
+                <Reveal delay={settings.cover ? 0.08 : 0}>
+                  <article className={cn("deckle relative rounded-[24px] px-6 pb-7 pt-7 sm:px-12 sm:pb-10 sm:pt-10", settings.cover && "mt-4 sm:mt-5")}>
+                    <p className="flex items-center gap-3 font-hand text-[1.55rem] leading-none text-blue-deep">
+                      여는 글
+                      <span className="h-px w-10 bg-blue/35" aria-hidden />
+                    </p>
+
+                    {lead && (
+                      <p className="mt-5 font-serif text-[1.4rem] font-bold leading-[1.5] tracking-[-0.02em] text-ink [text-wrap:balance] sm:text-[1.75rem] sm:leading-[1.45]">
+                        {lines(lead)}
+                      </p>
+                    )}
+
+                    {body.length > 0 && (
+                      <div className={cn("mt-5 space-y-2.5 text-[16px] leading-[1.62] text-ink/85 [text-wrap:pretty] sm:text-[17px]", lead && "border-l-2 border-blue-mist pl-4 sm:pl-5")}>
+                        {body.map((p, i) => (
+                          <p key={i}>{lines(p)}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="mt-7 flex items-center justify-end gap-2 text-[14px] font-semibold text-ink-soft">
+                      <span className="h-px w-6 bg-ink-faint/50" aria-hidden />
+                      {settings.organizer}
+                      <Seal size={22} />
+                    </p>
+                  </article>
+                </Reveal>
+              )}
+            </section>
           )}
 
           <section aria-labelledby="works-heading">
@@ -125,10 +154,33 @@ export default async function HomePage() {
   );
 }
 
+/** 소개글: 빈 줄은 문단, 한 번 바꾼 줄은 그대로 줄바꿈으로 살린다(관리자가 맞춘 줄 모양을 지킨다). */
+function introParagraphs(text: string): string[][] {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split(/\n\s*\n/)
+    .map((p) =>
+      p
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean),
+    )
+    .filter((p) => p.length > 0);
+}
+
+function lines(paragraph: string[]) {
+  return paragraph.map((line, i) => (
+    <Fragment key={i}>
+      {i > 0 && <br />}
+      {line}
+    </Fragment>
+  ));
+}
+
 /** 쪽빛 낙관(도장) */
-function Seal() {
+function Seal({ size = 30 }: { size?: number }) {
   return (
-    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden className="shrink-0">
+    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden className="shrink-0">
       <rect x="2.5" y="2.5" width="25" height="25" rx="5" fill="var(--color-blue)" transform="rotate(-4 15 15)" />
       <text x="15" y="20.5" textAnchor="middle" fontSize="14" fontWeight="700" fill="#fbf8f2" fontFamily="var(--font-serif)" transform="rotate(-4 15 15)">
         展

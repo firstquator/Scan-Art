@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AppError, ERROR_MESSAGES, fail, toErrorCode, toUserMessage } from "./errors";
 
 // 허용되는 영문: 파일 형식 이름뿐. 그 밖의 영어가 섞이면 실패한다.
-const ALLOWED_LATIN = /\b(JPG|PNG|HEIC|m4a|mp3|webm)\b/g;
+const ALLOWED_LATIN = /\b(JPG|PNG|HEIC|m4a|mp3|webm|wav)\b/g;
 
 describe("ERROR_MESSAGES", () => {
   it.each(Object.entries(ERROR_MESSAGES))("%s 문구는 자연스러운 한국어다", (_code, message) => {

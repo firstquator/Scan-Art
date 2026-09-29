@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import Link from "next/link";
-import { useMemo, useState, ViewTransition } from "react";
+import { useMemo, useState, ViewTransition, type ReactNode } from "react";
 import type { ArtworkLink, ArtworkView as ArtworkData } from "@/lib/types";
 import { allSentences, splitParagraphs } from "@/lib/sentences";
 import { joinArtists } from "@/lib/format";
@@ -14,6 +14,7 @@ import { ArtImage } from "./art-image";
 import { ArtworkGallery } from "./artwork-gallery";
 import { ScrollCue } from "./scroll-cue";
 import { AudioPlayer } from "./audio-player";
+import { BgmToggle } from "./bgm";
 import { Description, TextSizeControl } from "./description";
 import { ShareButton } from "./share-button";
 import { useSpeech } from "./use-speech";
@@ -39,10 +40,12 @@ export function ArtworkView({ artwork, prev, next, index, total, exhibitionTitle
   const showTts = !artwork.audio && artwork.ttsEnabled && sentences.length > 0 && speech.supported;
   const hasListen = !!artwork.audio || showTts;
   const title = artwork.title || "제목 없는 작품";
+  const [voicePlaying, setVoicePlaying] = useState(false);
+  const bgm = artwork.bgm ? <BgmToggle src={artwork.bgm.url} duck={voicePlaying || speech.speaking} preview={preview} /> : null;
 
   return (
     <div className={cn("@container relative", preview ? "min-h-full" : "min-h-dvh")}>
-      <TopBar exhibitionTitle={exhibitionTitle} index={index} total={total} shareUrl={shareUrl} title={title} preview={preview} />
+      <TopBar exhibitionTitle={exhibitionTitle} index={index} total={total} shareUrl={shareUrl} title={title} preview={preview} bgm={bgm} />
 
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-2 @2xl:px-6">
         <ViewTransition name={`art-${artwork.id}`} share="artwork-morph" default="none">
@@ -97,7 +100,7 @@ export function ArtworkView({ artwork, prev, next, index, total, exhibitionTitle
             <Reveal delay={0.12} className="mt-8">
               <section className="deckle rounded-[24px] px-5 py-5 @2xl:px-6" aria-label="듣기">
                 {artwork.audio ? (
-                  <AudioPlayer src={artwork.audio.url} duration={artwork.audio.duration} onPlay={speech.stop} />
+                  <AudioPlayer src={artwork.audio.url} duration={artwork.audio.duration} onPlay={speech.stop} onPlayingChange={setVoicePlaying} />
                 ) : (
                   <TtsButton speaking={speech.speaking} onStart={speech.start} onStop={speech.stop} />
                 )}
@@ -106,20 +109,24 @@ export function ArtworkView({ artwork, prev, next, index, total, exhibitionTitle
           )}
 
           {paragraphs.length > 0 && (
-            <section className="mt-10" aria-labelledby="story-heading">
-              <Reveal>
-                <div className="mb-5 flex items-center justify-between gap-3">
-                  <h2 id="story-heading" className="flex items-center gap-2.5 font-serif text-xl font-bold text-ink">
+            <Reveal className="mt-10">
+              <section className="deckle rounded-[26px] px-5 pb-7 pt-5 @2xl:px-9 @2xl:pb-9 @2xl:pt-7" aria-labelledby="story-heading">
+                <div className="flex items-center justify-between gap-3 border-b border-dashed border-paper-edge pb-4">
+                  <h2 id="story-heading" className="flex items-center gap-2.5 font-serif text-[1.3rem] font-bold text-ink">
                     <span className="h-5 w-1 rounded-full bg-blue" aria-hidden />
                     작품 이야기
                   </h2>
                   <TextSizeControl />
                 </div>
-              </Reveal>
-              <Reveal delay={0.05}>
                 <Description paragraphs={paragraphs} activeSentence={speech.current} />
-              </Reveal>
-            </section>
+                {artwork.artists.length > 0 && (
+                  <p className="mt-6 flex items-center justify-end gap-2 text-right font-hand text-[1.45rem] leading-none text-ink-soft">
+                    <span className="h-px w-8 bg-ink-faint/50" aria-hidden />
+                    {joinArtists(artwork.artists)}
+                  </p>
+                )}
+              </section>
+            </Reveal>
           )}
 
           {artwork.youtubeUrl && (
@@ -170,6 +177,7 @@ function TopBar({
   shareUrl,
   title,
   preview,
+  bgm,
 }: {
   exhibitionTitle: string;
   index: number;
@@ -177,6 +185,7 @@ function TopBar({
   shareUrl: string;
   title: string;
   preview?: boolean;
+  bgm: ReactNode;
 }) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
@@ -207,7 +216,8 @@ function TopBar({
             <span className="truncate">{exhibitionTitle}</span>
           </Link>
         )}
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
+          {bgm}
           {total > 0 && index >= 0 && (
             <span className="tabular rounded-full bg-paper-deep/80 px-2.5 py-1 text-xs font-semibold text-ink-soft">
               {index + 1} / {total}

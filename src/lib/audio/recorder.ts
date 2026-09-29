@@ -16,6 +16,7 @@ export function extensionFor(contentType: string): string {
   if (t === "audio/webm") return "webm";
   if (t === "audio/mpeg") return "mp3";
   if (t === "audio/ogg") return "ogg";
+  if (t === "audio/wav" || t === "audio/x-wav" || t === "audio/wave") return "wav";
   return "m4a";
 }
 

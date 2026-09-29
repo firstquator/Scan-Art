@@ -3,7 +3,7 @@ import { isArtworkId } from "./ids";
 import { isOwnedMediaUrl } from "./storage/urls";
 import { parseYouTubeId } from "./youtube";
 
-export const MAX_IMAGES = 12;
+export const MAX_IMAGES = 24;
 export const MAX_AUDIO_SECONDS = 180;
 export const MAX_ARTISTS = 30;
 
@@ -39,6 +39,17 @@ export const audioSchema = z.object({
   bytes: z.number().int().nonnegative(),
 });
 
+export const bgmSchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("default") }),
+  z.object({ mode: z.literal("none") }),
+  z.object({
+    mode: z.literal("custom"),
+    url: mediaUrl,
+    name: trimmed(80, "음악 이름"),
+    bytes: z.number().int().nonnegative(),
+  }),
+]);
+
 export const artworkSchema = z.object({
   id: z.string().refine(isArtworkId, { error: "작품 번호가 올바르지 않습니다." }),
   title: z
@@ -64,11 +75,13 @@ export const artworkSchema = z.object({
   isPublished: z.boolean(),
   images: z.array(imageSchema).max(MAX_IMAGES, { error: `사진은 ${MAX_IMAGES}장까지 올릴 수 있습니다.` }),
   audio: audioSchema.nullable(),
+  bgm: bgmSchema,
 });
 
 export type ArtworkInput = z.infer<typeof artworkSchema>;
 export type ImageInput = z.infer<typeof imageSchema>;
 export type AudioInput = z.infer<typeof audioSchema>;
+export type BgmInput = z.infer<typeof bgmSchema>;
 
 const dateString = z
   .string()

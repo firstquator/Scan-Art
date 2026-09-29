@@ -19,6 +19,8 @@ export interface ArtworkView {
   ttsEnabled: boolean;
   youtubeUrl: string;
   audio: { url: string; duration: number } | null;
+  /** 배경음악. 없으면 null */
+  bgm: { url: string; name: string } | null;
   images: ImageView[];
 }
 

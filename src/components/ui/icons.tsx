@@ -133,3 +133,10 @@ export const IconCalendar = (p: IconProps) => (
 export const IconMove = (p: IconProps) => (
   <svg {...base(p)}><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" /></svg>
 );
+
+export const IconMusic = (p: IconProps) => (
+  <svg {...base(p)}><path d="M9 17.5V6.2l10-2.2v11.3" /><circle cx="6.5" cy="17.5" r="2.5" /><circle cx="16.5" cy="15.3" r="2.5" /><path d="M9 9.6l10-2.2" /></svg>
+);
+export const IconMusicOff = (p: IconProps) => (
+  <svg {...base(p)}><path d="M9 11.5v6M9 6.2l10-2.2v8.3" /><circle cx="6.5" cy="17.5" r="2.5" /><path d="M3.5 3.5l17 17" /></svg>
+);

@@ -3,7 +3,8 @@ import { asc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { artworkImages, artworks, type Artwork, type ArtworkImage } from "@/db/schema";
 import type { AdminArtworkSummary, ArtworkLink, ArtworkView, ImageView } from "@/lib/types";
-import type { ArtworkInput } from "@/lib/validation";
+import { resolveBgm } from "@/lib/bgm";
+import type { ArtworkInput, BgmInput } from "@/lib/validation";
 
 function toImageView(img: ArtworkImage): ImageView {
   return {
@@ -14,6 +15,12 @@ function toImageView(img: ArtworkImage): ImageView {
     blurData: img.blurData,
     alt: img.alt,
   };
+}
+
+function toBgmInput(row: Artwork): BgmInput {
+  if (row.bgmMode === "custom" && row.bgmUrl) return { mode: "custom", url: row.bgmUrl, name: row.bgmName, bytes: row.bgmBytes };
+  if (row.bgmMode === "none") return { mode: "none" };
+  return { mode: "default" };
 }
 
 function toView(row: Artwork, images: ArtworkImage[]): ArtworkView {
@@ -27,6 +34,7 @@ function toView(row: Artwork, images: ArtworkImage[]): ArtworkView {
     ttsEnabled: row.ttsEnabled,
     youtubeUrl: row.youtubeUrl,
     audio: row.audioUrl ? { url: row.audioUrl, duration: row.audioDuration ?? 0 } : null,
+    bgm: resolveBgm(toBgmInput(row)),
     images: images.map(toImageView),
   };
 }
@@ -153,11 +161,16 @@ export async function getEditableArtwork(id: string): Promise<EditableArtwork | 
     audio: row.audioUrl
       ? { url: row.audioUrl, duration: row.audioDuration ?? 0, bytes: row.audioBytes }
       : null,
+    bgm: toBgmInput(row),
   };
 }
 
-function mediaUrlsOf(input: Pick<ArtworkInput, "images" | "audio">): string[] {
-  return [...input.images.flatMap((i) => [i.urlLg, i.urlSm]), ...(input.audio ? [input.audio.url] : [])];
+function mediaUrlsOf(input: Pick<ArtworkInput, "images" | "audio" | "bgm">): string[] {
+  return [
+    ...input.images.flatMap((i) => [i.urlLg, i.urlSm]),
+    ...(input.audio ? [input.audio.url] : []),
+    ...(input.bgm.mode === "custom" ? [input.bgm.url] : []),
+  ];
 }
 
 /** 새로 만들거나 고친다. 더 이상 쓰지 않게 된 파일 주소를 돌려준다. */
@@ -177,6 +190,10 @@ export async function saveArtwork(input: ArtworkInput): Promise<{ removedUrls: s
     audioUrl: input.audio?.url ?? null,
     audioDuration: input.audio?.duration ?? null,
     audioBytes: input.audio?.bytes ?? 0,
+    bgmMode: input.bgm.mode,
+    bgmUrl: input.bgm.mode === "custom" ? input.bgm.url : null,
+    bgmName: input.bgm.mode === "custom" ? input.bgm.name : "",
+    bgmBytes: input.bgm.mode === "custom" ? input.bgm.bytes : 0,
     updatedAt: now,
   };
 
@@ -248,6 +265,8 @@ export async function reorderArtworks(ids: string[]): Promise<void> {
 export async function artworkMediaBytes(): Promise<number> {
   const db = await getDb();
   const [img] = await db.select({ total: sql<number>`coalesce(sum(${artworkImages.bytes}), 0)` }).from(artworkImages);
-  const [aud] = await db.select({ total: sql<number>`coalesce(sum(${artworks.audioBytes}), 0)` }).from(artworks);
+  const [aud] = await db
+    .select({ total: sql<number>`coalesce(sum(${artworks.audioBytes} + ${artworks.bgmBytes}), 0)` })
+    .from(artworks);
   return Number(img.total) + Number(aud.total);
 }

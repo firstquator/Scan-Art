@@ -13,18 +13,27 @@ interface AudioPlayerProps {
   duration: number;
   label?: string;
   onPlay?: () => void;
+  /** 재생 중인지 바뀔 때(배경음악을 잠시 줄이기 위해) */
+  onPlayingChange?: (playing: boolean) => void;
 }
 
 const RING = 2 * Math.PI * 34;
 
 /** 작가 목소리 재생기: 큰 재생 버튼 + 원형 진행 표시 + 재생 중 물결 */
-export function AudioPlayer({ src, duration: initialDuration, label = "작가의 목소리로 듣기", onPlay }: AudioPlayerProps) {
+export function AudioPlayer({ src, duration: initialDuration, label = "작가의 목소리로 듣기", onPlay, onPlayingChange }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(initialDuration);
   const toast = useToast();
   const reduce = useReducedMotion();
+  const onPlayingChangeRef = useRef(onPlayingChange);
+  useEffect(() => {
+    onPlayingChangeRef.current = onPlayingChange;
+  });
+  useEffect(() => {
+    onPlayingChangeRef.current?.(playing);
+  }, [playing]);
 
   useEffect(() => {
     const audio = audioRef.current;

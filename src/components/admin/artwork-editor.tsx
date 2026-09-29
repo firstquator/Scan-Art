@@ -14,26 +14,28 @@ import { IconArrowLeft, IconCheck, IconEye, IconPencil } from "@/components/ui/i
 import type { EditableArtwork } from "@/lib/data/artworks";
 import { messageFor } from "@/lib/errors";
 import type { ArtworkView as ArtworkViewData } from "@/lib/types";
-import type { ArtworkInput } from "@/lib/validation";
+import { resolveBgm } from "@/lib/bgm";
+import type { ArtworkInput, BgmInput } from "@/lib/validation";
 import { parseYouTubeId, youTubeThumbnail } from "@/lib/youtube";
 import { cn } from "@/lib/cn";
 import { useAdmin } from "./admin-context";
 import { ArtistsInput } from "./artists-input";
 import { AudioRecorder } from "./audio-recorder";
+import { BgmPicker } from "./bgm-picker";
 import type { EditorAudio, EditorImage } from "./editor-types";
 import { ImageUploader } from "./image-uploader";
 import { PhoneFrame } from "./phone-preview";
 import { QrPanel } from "./qr-panel";
 import { useLeaveGuard } from "./use-leave-guard";
 
-type Fields = Omit<ArtworkInput, "images" | "audio">;
+type Fields = Omit<ArtworkInput, "images" | "audio" | "bgm">;
 
 function toEditorImages(initial: EditableArtwork): EditorImage[] {
   return initial.images.map((data, i) => ({ key: `saved-${i}-${data.urlSm}`, status: "done", progress: 100, data }));
 }
 
-function snapshot(fields: Fields, images: EditorImage[], audio: EditorAudio | null) {
-  return JSON.stringify({ fields, images: images.map((i) => i.data ?? i.key), audio });
+function snapshot(fields: Fields, images: EditorImage[], audio: EditorAudio | null, bgm: BgmInput) {
+  return JSON.stringify({ fields, images: images.map((i) => i.data ?? i.key), audio, bgm });
 }
 
 export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
@@ -55,17 +57,19 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
   }));
   const [images, setImages] = useState<EditorImage[]>(() => toEditorImages(initial));
   const [audio, setAudio] = useState<EditorAudio | null>(initial.audio);
+  const [bgm, setBgm] = useState<BgmInput>(initial.bgm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [audioBusy, setAudioBusy] = useState(false);
+  const [bgmBusy, setBgmBusy] = useState(false);
   const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
-  const [baseline, setBaseline] = useState(() => snapshot(fields, images, audio));
+  const [baseline, setBaseline] = useState(() => snapshot(fields, images, audio, bgm));
   const [savedFlash, setSavedFlash] = useState(false);
 
   // 이번 편집에서 새로 올렸지만 아직 저장되지 않은 파일
   const sessionUploads = useRef(new Set<string>());
 
-  const current = snapshot(fields, images, audio);
+  const current = snapshot(fields, images, audio, bgm);
   const dirty = current !== baseline;
   const uploading = images.some((i) => i.status === "processing" || i.status === "uploading");
   const failed = images.some((i) => i.status === "error");
@@ -107,7 +111,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
   }
 
   async function save() {
-    if (uploading || audioBusy) {
+    if (uploading || audioBusy || bgmBusy) {
       toast.info(messageFor("UPLOAD_PENDING"));
       return;
     }
@@ -120,6 +124,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
       ...fields,
       images: images.filter((i) => i.status === "done" && i.data).map((i) => i.data!),
       audio,
+      bgm,
     };
     const result = await saveArtworkAction(payload);
     setSaving(false);
@@ -134,6 +139,14 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
       return;
     }
 
+    // 올렸다가 결국 쓰지 않은 파일(예: 배경음악을 올린 뒤 ‘기본 음악’으로 되돌림)은 정리한다.
+    const kept = new Set([
+      ...payload.images.flatMap((i) => [i.urlLg, i.urlSm]),
+      ...(payload.audio ? [payload.audio.url] : []),
+      ...(payload.bgm.mode === "custom" ? [payload.bgm.url] : []),
+    ]);
+    const unused = Array.from(sessionUploads.current).filter((u) => !kept.has(u));
+    if (unused.length) void discardUploadsAction(unused);
     sessionUploads.current.clear();
     setBaseline(current);
     setErrors({});
@@ -179,9 +192,10 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
       ttsEnabled: fields.ttsEnabled,
       youtubeUrl: parseYouTubeId(fields.youtubeUrl) ? fields.youtubeUrl : "",
       audio: audio ? { url: audio.url, duration: audio.duration } : null,
+      bgm: resolveBgm(bgm),
       images: images.filter((i) => i.data).map((i) => i.data!),
     }),
-    [fields, images, audio],
+    [fields, images, audio, bgm],
   );
 
   const youtubeId = parseYouTubeId(fields.youtubeUrl);
@@ -204,7 +218,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
             {fields.title || "제목 없는 작품"}
           </h1>
         </div>
-        <SaveStatus dirty={dirty} saving={saving} flash={savedFlash} uploading={uploading || audioBusy} />
+        <SaveStatus dirty={dirty} saving={saving} flash={savedFlash} uploading={uploading || audioBusy || bgmBusy} />
         <InkButton onClick={save} loading={saving} size="lg" className="max-sm:hidden" icon={<IconCheck size={20} strokeWidth={2.4} />}>
           {isNew ? "등록하기" : "저장"}
         </InkButton>
@@ -320,7 +334,7 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
             </div>
           </Section>
 
-          <Section title="소리와 영상" hint="모두 선택 사항입니다. 넣으면 관람객 화면에 듣기·영상 영역이 생깁니다.">
+          <Section title="소리와 영상" hint="모두 선택 사항입니다. 넣으면 관람객 화면에 듣기·배경음악·영상이 생깁니다.">
             <SubHead title="작가의 목소리" hint="학생이 직접 작품을 소개하는 목소리를 담아 보세요." />
             <AudioRecorder
               artworkId={fields.id}
@@ -329,6 +343,16 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
               onChange={changeAudio}
               onUploaded={(u) => sessionUploads.current.add(u)}
               onBusyChange={setAudioBusy}
+            />
+            <Divider />
+            <SubHead title="배경음악" hint="작품 화면에 흐르는 음악입니다. 관람객이 화면 위쪽 버튼으로 켜고 끌 수 있습니다." />
+            <BgmPicker
+              artworkId={fields.id}
+              storageMode={storageMode}
+              value={bgm}
+              onChange={setBgm}
+              onUploaded={(u) => sessionUploads.current.add(u)}
+              onBusyChange={setBgmBusy}
             />
             <Divider />
             <SubHead title="영상" hint="제작 과정이나 인터뷰 영상이 유튜브에 있다면 주소를 붙여넣어 주세요." />

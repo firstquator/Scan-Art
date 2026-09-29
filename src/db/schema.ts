@@ -50,6 +50,11 @@ export const artworks = pgTable(
     audioDuration: integer("audio_duration"),
     audioBytes: integer("audio_bytes").notNull().default(0),
     ttsEnabled: boolean("tts_enabled").notNull().default(true),
+    /** 배경음악: default(기본 음악) · custom(직접 올린 파일) · none(없음) */
+    bgmMode: text("bgm_mode").notNull().default("default"),
+    bgmUrl: text("bgm_url"),
+    bgmName: text("bgm_name").notNull().default(""),
+    bgmBytes: integer("bgm_bytes").notNull().default(0),
     youtubeUrl: text("youtube_url").notNull().default(""),
     isPublished: boolean("is_published").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),

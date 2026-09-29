@@ -6,7 +6,7 @@ import { InkButton } from "@/components/ui/ink-button";
 import { Modal } from "@/components/ui/modal";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
-import { IconAlert, IconCheck, IconChevronLeft, IconChevronRight, IconImage, IconPrinter } from "@/components/ui/icons";
+import { IconAlert, IconCheck, IconChevronLeft, IconChevronRight, IconExpand, IconImage, IconPrinter } from "@/components/ui/icons";
 import { ArtImage } from "@/components/artwork/art-image";
 import type { AdminArtworkSummary } from "@/lib/types";
 import { messageFor } from "@/lib/errors";
@@ -61,8 +61,30 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
   const targetIds = useMemo(() => new Set(targets.map((a) => a.id)), [targets]);
 
   const { item, qr } = templateGeometry(kind, { cardSize, stickerSize, stickerCaption });
+
+  const renderItem = (art: AdminArtworkSummary) =>
+    kind === "card" ? (
+      <LabelCard
+        // 작품이나 내용이 바뀌면 글자 크기 맞춤을 처음부터 다시 한다(앞 작품의 맞춤 상태를 물려받지 않게).
+        key={`${cardSize}|${art.id}|${art.title}|${art.artists.join("/")}|${art.material}|${art.size}`}
+        art={art}
+        url={`${siteUrl}/a/${art.id}`}
+        size={cardSize}
+        qr={qr}
+        hanji={hanji}
+        cutMarks={cutMarks}
+        exhibitionTitle={exhibitionTitle}
+        organizer={organizer}
+      />
+    ) : (
+      <LabelSticker art={art} url={`${siteUrl}/a/${art.id}`} size={stickerSize} caption={stickerCaption} cutMarks={cutMarks} />
+    );
   const layout = computeSheetLayout(item, { margin: 8, gap: cutMarks ? 4 : 2 });
   const pages = paginate(targets, layout.perPage);
+  // 명제표 하나를 크게 보기
+  const [zoomId, setZoomId] = useState<string | null>(null);
+  const zoomIndex = zoomId ? targets.findIndex((a) => a.id === zoomId) : -1;
+  const zoomArt = zoomIndex >= 0 ? targets[zoomIndex] : null;
   const currentPage = Math.min(page, Math.max(0, pages.length - 1));
   const smallQr = qr < MIN_RECOMMENDED_QR_MM;
 
@@ -178,7 +200,7 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
         )}
       </div>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_320px] print:mt-0 print:block">
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_320px] print:mt-0 print:block">
         {/* 왼쪽: 모양·옵션 (좁은 화면에서는 작품 고르기도 여기에) */}
         <aside className="space-y-5 print:hidden">
           <Panel title="모양">
@@ -275,21 +297,18 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
                         const pos = cellPosition(layout, item, i);
                         return (
                           <div key={art.id} className="absolute" style={{ left: `${pos.x}mm`, top: `${pos.y}mm`, width: `${item.width}mm`, height: `${item.height}mm` }}>
-                            {kind === "card" ? (
-                              <LabelCard
-                                key={cardSize}
-                                art={art}
-                                url={`${siteUrl}/a/${art.id}`}
-                                size={cardSize}
-                                qr={qr}
-                                hanji={hanji}
-                                cutMarks={cutMarks}
-                                exhibitionTitle={exhibitionTitle}
-                                organizer={organizer}
-                              />
-                            ) : (
-                              <LabelSticker art={art} url={`${siteUrl}/a/${art.id}`} size={stickerSize} caption={stickerCaption} cutMarks={cutMarks} />
-                            )}
+                            {renderItem(art)}
+                            <button
+                              type="button"
+                              onClick={() => setZoomId(art.id)}
+                              aria-label={`${art.title} ${kind === "card" ? "명제표" : "스티커"} 크게 보기`}
+                              className="group absolute inset-0 z-10 cursor-zoom-in rounded-[2.5mm] outline-none ring-blue/0 transition-[box-shadow] hover:ring-[0.6mm] hover:ring-blue/55 focus-visible:ring-[0.6mm] focus-visible:ring-blue print:hidden"
+                            >
+                              <span className="pointer-events-none absolute right-[1.5mm] top-[1.5mm] flex items-center gap-[0.8mm] rounded-full bg-ink/75 px-[2mm] py-[0.9mm] text-[2.6mm] font-semibold text-paper-light opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                                <IconExpand size={10} strokeWidth={2.4} />
+                                크게 보기
+                              </span>
+                            </button>
                           </div>
                         );
                       })}
@@ -339,6 +358,21 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
         </ul>
       </Modal>
 
+      <ItemZoom
+        art={zoomArt}
+        index={zoomIndex}
+        total={targets.length}
+        width={item.width}
+        height={item.height}
+        onClose={() => setZoomId(null)}
+        onMove={(delta) => {
+          const next = targets[zoomIndex + delta];
+          if (next) setZoomId(next.id);
+        }}
+      >
+        {zoomArt && renderItem(zoomArt)}
+      </ItemZoom>
+
       <style>{`
         @media print {
           @page { size: A4 portrait; margin: 0; }
@@ -350,6 +384,99 @@ export function PrintStudio({ artworks, preselected }: { artworks: AdminArtworkS
           html, body, body > div { min-height: 0 !important; }
         }
       `}</style>
+    </div>
+  );
+}
+
+/** 명제표·스티커 하나를 크게 본다. 인쇄될 모습 그대로(mm)를 창 너비에 맞게 키운다. ←/→로 넘긴다. */
+function ItemZoom({
+  art,
+  index,
+  total,
+  width,
+  height,
+  onClose,
+  onMove,
+  children,
+}: {
+  art: AdminArtworkSummary | null;
+  index: number;
+  total: number;
+  width: number;
+  height: number;
+  onClose: () => void;
+  onMove: (delta: number) => void;
+  children: ReactNode;
+}) {
+  const open = art !== null;
+  const onMoveRef = useRef(onMove);
+  useLayoutEffect(() => {
+    onMoveRef.current = onMove;
+  });
+  useLayoutEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") onMoveRef.current(-1);
+      if (e.key === "ArrowRight") onMoveRef.current(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title={art?.title ?? ""}
+      description={`실제 크기 ${width}×${height}mm · 인쇄되는 모습 그대로입니다`}
+      footer={
+        <div className="flex w-full items-center justify-between gap-2">
+          <InkButton variant="ghost" icon={<IconChevronLeft size={18} />} disabled={index <= 0} onClick={() => onMove(-1)}>
+            이전
+          </InkButton>
+          <span className="tabular text-[14px] font-semibold text-ink-soft">
+            {index + 1} / {total}
+          </span>
+          <InkButton variant="ghost" disabled={index >= total - 1} onClick={() => onMove(1)}>
+            다음 <IconChevronRight size={18} />
+          </InkButton>
+        </div>
+      }
+    >
+      <div className="rounded-2xl bg-paper-deep/50 p-3 sm:p-5">
+        <ScaledMm width={width} height={height}>
+          {children}
+        </ScaledMm>
+      </div>
+    </Modal>
+  );
+}
+
+/** mm로 그린 내용을 부모 너비에 꼭 맞게 키우거나 줄여 보여 준다(글자 크기 맞춤은 실제 mm 기준 그대로). */
+function ScaledMm({ width, height, children }: { width: number; height: number; children: ReactNode }) {
+  const [scale, setScale] = useState(0);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+    const fit = () => inner.offsetWidth > 0 && setScale(outer.clientWidth / inner.offsetWidth);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(outer);
+    return () => ro.disconnect();
+  }, [width, height]);
+  return (
+    <div ref={outerRef} className="mx-auto w-full" style={{ maxWidth: 640, aspectRatio: `${width} / ${height}` }}>
+      <div
+        ref={innerRef}
+        className="origin-top-left"
+        style={{ width: `${width}mm`, height: `${height}mm`, transform: `scale(${scale})`, visibility: scale ? "visible" : "hidden" }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

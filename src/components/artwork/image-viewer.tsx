@@ -137,7 +137,7 @@ function ViewerBody({ images, startIndex, title, onClose }: Omit<ImageViewerProp
             className="absolute inset-0 flex items-center justify-center"
           >
             <motion.div
-              className="flex h-full w-full items-center justify-center p-3 sm:p-10"
+              className="flex h-full w-full items-center justify-center p-1.5 sm:p-8"
               drag={!zoomed}
               dragDirectionLock
               dragSnapToOrigin
@@ -176,7 +176,7 @@ function ViewerBody({ images, startIndex, title, onClose }: Omit<ImageViewerProp
       </div>
 
       <p className="relative z-10 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 text-center text-sm text-white/70">
-        {zoomed ? "두 번 톡 치면 원래 크기로 돌아갑니다" : images.length > 1 ? "옆으로 밀어 넘기고, 아래로 쓸어내려 닫습니다" : "아래로 쓸어내려 닫습니다"}
+        {zoomed ? "두 번 톡 치면 원래 크기로 돌아갑니다" : images.length > 1 ? "옆으로 밀어 넘기고, 아래로 쓸어내려 닫습니다" : "두 번 톡 치거나 두 손가락으로 벌리면 더 크게 보입니다"}
       </p>
     </motion.div>
   );
@@ -255,7 +255,7 @@ function ZoomableImage({ image, alt, onZoomChange }: { image: ImageView; alt: st
 
   return (
     <motion.div
-      className="relative flex h-full w-full touch-none items-center justify-center"
+      className="relative flex h-full w-full touch-none items-center justify-center [container-type:size]"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -268,8 +268,9 @@ function ZoomableImage({ image, alt, onZoomChange }: { image: ImageView; alt: st
         width={image.width}
         height={image.height}
         draggable={false}
-        style={{ scale, x, y }}
-        className="max-h-full max-w-full select-none rounded-md object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.6)]"
+        // 원본이 작아도 화면(가로·세로 중 먼저 닿는 쪽)에 꽉 차게 키운다.
+        style={{ scale, x, y, width: `min(100cqw, ${image.width / image.height} * 100cqh)`, height: "auto", aspectRatio: `${image.width} / ${image.height}` }}
+        className="max-w-none select-none rounded-md object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.6)]"
       />
     </motion.div>
   );

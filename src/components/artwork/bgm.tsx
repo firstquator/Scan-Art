@@ -16,11 +16,15 @@ import { cn } from "@/lib/cn";
 
 const STORAGE_KEY = "scan-art:bgm";
 const VOLUME = 0.45;
-const GESTURES = ["pointerdown", "keydown", "touchend"] as const;
+// 브라우저가 '사용자가 직접 한 동작'으로 인정해 소리를 허락하는 이벤트들.
+// (pointerdown은 휴대폰 터치에서 인정되지 않아 넣지 않는다.)
+const GESTURES = ["touchend", "pointerup", "click", "keydown"] as const;
 
 interface BgmState {
   enabled: boolean;
   playing: boolean;
+  /** 켜져 있지만 브라우저가 막아서 화면을 누르기를 기다리는 중 */
+  blocked: boolean;
 }
 
 let audio: HTMLAudioElement | null = null;
@@ -31,12 +35,12 @@ let ducked = false;
 let prefLoaded = false;
 let releaseTimer: ReturnType<typeof setTimeout> | undefined;
 let fadeRaf = 0;
-let waitingGesture = false;
-let state: BgmState = { enabled: false, playing: false };
+let blocked = false;
+let state: BgmState = { enabled: false, playing: false, blocked: false };
 const listeners = new Set<() => void>();
 
 function emit() {
-  state = { enabled, playing: !!audio && !audio.paused };
+  state = { enabled, playing: !!audio && !audio.paused, blocked: enabled && blocked };
   listeners.forEach((l) => l());
 }
 
@@ -78,6 +82,11 @@ function fadeOutAndPause(ms = 450) {
   fadeTo(0, ms, () => audio?.pause());
 }
 
+/**
+ * 재생한다. a.play()는 await 전에 동기로 불리므로 터치 이벤트 안에서 부르면 '사용자 동작'으로 인정된다.
+ * 휴대폰 브라우저는 화면을 한 번도 누르지 않은 페이지의 소리 재생을 막는다(어떤 코드로도 우회할 수 없다).
+ * 막히면 화면을 누를 때마다 다시 시도하고, 성공하면 기다리기를 멈춘다.
+ */
 async function play() {
   if (!wantedSrc || !enabled || ducked) return;
   const a = element();
@@ -89,27 +98,25 @@ async function play() {
   if (a.paused) setVolume(a, 0);
   try {
     await a.play();
+    setBlocked(false);
     fadeTo(VOLUME, 1100);
   } catch {
-    // 브라우저가 자동 재생을 막았다: 화면을 처음 누르는 순간 튼다.
-    waitForGesture();
+    if (enabled) setBlocked(true);
   }
 }
 
-function waitForGesture() {
-  if (waitingGesture) return;
-  waitingGesture = true;
-  const go = (e: Event) => {
-    // 음악 버튼을 누른 경우는 버튼이 알아서 처리한다.
-    if (e.target instanceof Element && e.target.closest("[data-bgm-toggle]")) return;
-    stop();
-    void play();
-  };
-  const stop = () => {
-    waitingGesture = false;
-    GESTURES.forEach((t) => document.removeEventListener(t, go, true));
-  };
-  GESTURES.forEach((t) => document.addEventListener(t, go, true));
+function onGesture(e: Event) {
+  // 음악 버튼을 누른 경우는 버튼이 알아서 처리한다.
+  if (e.target instanceof Element && e.target.closest("[data-bgm-toggle]")) return;
+  void play();
+}
+
+function setBlocked(value: boolean) {
+  if (blocked === value) return;
+  blocked = value;
+  if (value) GESTURES.forEach((t) => document.addEventListener(t, onGesture, { capture: true, passive: true }));
+  else GESTURES.forEach((t) => document.removeEventListener(t, onGesture, { capture: true }));
+  emit();
 }
 
 /** 다른 음악으로 바꿔야 하면 부드럽게 줄였다가 바꿔 튼다. */
@@ -146,6 +153,7 @@ function release(src: string | null) {
 
 function setEnabled(value: boolean, persist: boolean) {
   enabled = value;
+  if (!value) setBlocked(false);
   if (persist) {
     try {
       window.localStorage.setItem(STORAGE_KEY, value ? "on" : "off");
@@ -189,7 +197,7 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-const serverState: BgmState = { enabled: false, playing: false };
+const serverState: BgmState = { enabled: false, playing: false, blocked: false };
 
 interface UseBgmOptions {
   /** 켬/끔을 기기에 기억하고, 켜 둔 사람에게는 들어오자마자 튼다(관리자 미리보기에서는 끈다). */
@@ -222,14 +230,17 @@ export function useBgm(src: string | null, { persist, duck }: UseBgmOptions) {
   return {
     enabled: snapshot.enabled,
     playing: snapshot.playing,
-    toggle: () => setEnabled(!enabled, persist),
+    blocked: snapshot.blocked,
+    // 켜져 있는데 막혀서 못 나오는 중이면, 버튼은 끄는 대신 바로 틀어 준다.
+    toggle: () => (enabled && blocked ? void play() : setEnabled(!enabled, persist)),
   };
 }
 
 /** 머리말의 배경음악 켜기/끄기 버튼. 처음 온 관람객에게는 잠깐 말풍선으로 알려 준다. */
 export function BgmToggle({ src, duck, preview }: { src: string; duck: boolean; preview?: boolean }) {
-  const { enabled, playing, toggle } = useBgm(src, { persist: !preview, duck });
+  const { enabled, playing, blocked, toggle } = useBgm(src, { persist: !preview, duck });
   const [hint, setHint] = useState(false);
+  const waiting = blocked && !preview;
   const reduce = useReducedMotion();
 
   useEffect(() => {
@@ -244,6 +255,7 @@ export function BgmToggle({ src, duck, preview }: { src: string; duck: boolean; 
 
   const on = enabled;
   const sounding = on && playing && !reduce;
+  const label = waiting ? "음악 듣기" : on ? "음악 끄기" : "음악 켜기";
 
   return (
     <div className="relative">
@@ -256,14 +268,15 @@ export function BgmToggle({ src, duck, preview }: { src: string; duck: boolean; 
           toggle();
         }}
         aria-pressed={on}
-        aria-label={on ? "배경음악 끄기" : "배경음악 켜기"}
+        aria-label={waiting ? "배경음악 듣기" : on ? "배경음악 끄기" : "배경음악 켜기"}
         className={cn(
-          "flex h-9 items-center gap-1.5 rounded-full border pl-2.5 pr-3 text-[13px] font-bold transition-[background-color,border-color,color,transform] duration-200 active:scale-95",
+          "relative flex h-9 items-center gap-1.5 rounded-full border pl-2.5 pr-3 text-[13px] font-bold transition-[background-color,border-color,color,transform] duration-200 active:scale-95",
           on
             ? "border-blue bg-blue text-paper-light shadow-[0_6px_14px_-8px_rgb(42_92_170/0.9)] hover:bg-blue-deep"
             : "border-paper-edge bg-paper-light/80 text-ink-soft hover:bg-paper-deep/70 hover:text-ink",
         )}
       >
+        {waiting && !reduce && <span className="absolute -inset-1 animate-ping rounded-full border-2 border-blue/40 [animation-duration:1.8s]" aria-hidden />}
         {on ? (
           <span className="flex h-4 w-4 items-end justify-center gap-[2px] pb-[1px]" aria-hidden>
             {[0.55, 1, 0.7].map((h, i) => (
@@ -278,11 +291,11 @@ export function BgmToggle({ src, duck, preview }: { src: string; duck: boolean; 
         ) : (
           <IconMusicOff size={16} strokeWidth={2} />
         )}
-        <span>{on ? "음악 끄기" : "음악 켜기"}</span>
+        <span>{label}</span>
       </button>
 
       <AnimatePresence>
-        {hint && (
+        {(hint || waiting) && (
           <motion.p
             role="status"
             initial={{ opacity: 0, y: -4, scale: 0.96 }}
@@ -292,7 +305,7 @@ export function BgmToggle({ src, duck, preview }: { src: string; duck: boolean; 
             className="absolute right-0 top-[calc(100%+10px)] z-40 whitespace-nowrap rounded-2xl bg-ink px-3.5 py-2 text-[13px] font-semibold text-paper-light shadow-[var(--shadow-lift)]"
           >
             <span className="absolute -top-1.5 right-6 h-3 w-3 rotate-45 rounded-[2px] bg-ink" aria-hidden />
-            배경음악이 흘러요 · 누르면 꺼집니다
+            {waiting ? "화면을 누르면 배경음악이 나와요" : "배경음악이 흘러요 · 누르면 꺼집니다"}
           </motion.p>
         )}
       </AnimatePresence>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useSyncExternalStore } from "react";
+import { Fragment, useSyncExternalStore } from "react";
 import type { Paragraph } from "@/lib/sentences";
 import { cn } from "@/lib/cn";
 import { tap } from "@/lib/haptics";
@@ -96,15 +96,23 @@ export function Description({ paragraphs, activeSentence }: { paragraphs: Paragr
       {paragraphs.map((p, pi) => (
         <p key={pi} className={cn("relative", pi === 0 && "pt-6 text-[1.08em] font-medium leading-[1.5] text-ink")}>
           {p.sentences.map((s) => (
-            <span
-              key={s.index}
-              className={cn(
-                "rounded-md transition-[background-color,color,box-shadow] duration-300 [box-decoration-break:clone]",
-                s.index === activeSentence && "bg-blue-mist text-blue-deep shadow-[0_0_0_3px_var(--color-blue-mist)]",
-              )}
-            >
-              {s.text}{" "}
-            </span>
+            <Fragment key={s.index}>
+              <span
+                className={cn(
+                  "rounded-md transition-[background-color,color,box-shadow] duration-300 [box-decoration-break:clone]",
+                  s.index === activeSentence && "bg-blue-mist text-blue-deep shadow-[0_0_0_3px_var(--color-blue-mist)]",
+                )}
+              >
+                {s.text.split("\n").map((line, li) => (
+                  <Fragment key={li}>
+                    {li > 0 && <br />}
+                    {line}
+                  </Fragment>
+                ))}
+              </span>
+              {/* 관리자가 Enter로 바꾼 줄은 그대로 줄을 바꾼다 */}
+              {s.br ? <br /> : " "}
+            </Fragment>
           ))}
         </p>
       ))}

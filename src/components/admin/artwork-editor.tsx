@@ -324,9 +324,9 @@ export function ArtworkEditor({ initial }: { initial: EditableArtwork }) {
               value={fields.description}
               onChange={(e) => set("description", e.target.value)}
               maxLength={3000}
-              placeholder="작품을 만든 이야기, 작가의 생각, 재미있는 과정 등을 적어 주세요. 줄을 바꾸면 문단이 나뉩니다."
+              placeholder="작품을 만든 이야기, 작가의 생각, 재미있는 과정 등을 적어 주세요."
               error={errors.description}
-              hint="짧은 문장으로 나눠 쓰면 휴대폰에서 읽기 편하고, 읽어주기 기능도 더 자연스럽습니다."
+              hint="빈 줄을 넣으면 문단이 나뉘고, Enter 한 번은 그 자리에서 줄만 바꿉니다. 오른쪽 휴대폰 미리보기를 보며 줄 모양을 맞춰 보세요."
             />
             <div className="mt-4 rounded-2xl bg-paper-deep/40 px-4 py-3.5">
               <Switch checked={fields.ttsEnabled} onChange={(v) => set("ttsEnabled", v)} label="녹음이 없을 때 ‘읽어주기’ 버튼 보여주기" />

@@ -434,16 +434,26 @@ function LabelCard({
   const vertical = size === "square";
   const mm = (v: number) => `${v}mm`;
 
-  // 명제표 전체가 넘치면(작가가 많거나 재료가 길 때) 재료·작가 → 작품명 순으로 조금씩 줄인다.
+  // 명제표 전체가 넘치면(작가가 많거나 재료가 길 때) 작품명만 조금씩 줄인다(절반까지).
+  // 그래도 넘치면 전시명을 빼고 다시 맞춘다.
+  // 작가와 재료·크기는 서로 영향을 주지 않도록 늘 같은 크기·같은 모양으로 둔다.
   // 자식(FitText)들이 먼저 제 폭에 맞춘 뒤 여기서 높이를 재므로, 모든 글이 한 번에 맞춰진다.
-  const [shrink, setShrink] = useState(1);
+  const [{ shrink, hideLabel }, setFit] = useState({ shrink: 1, hideLabel: false });
   const [fontTick, setFontTick] = useState(0);
   const columnRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = columnRef.current;
     if (!el || el.clientHeight === 0) return;
-    if (el.scrollHeight > el.clientHeight && shrink > 0.4) setShrink((k) => Math.round((k - 0.06) * 100) / 100);
-  }, [shrink, fontTick, art.title, art.artists, art.material, art.size]);
+    if (el.scrollHeight <= el.clientHeight || (shrink <= 0.5 && hideLabel)) return;
+    // 1) 작품명을 70%까지 줄인다 → 2) 그래도 넘치면 전시명을 빼고 다시 크게 → 3) 그 뒤로 50%까지 줄인다.
+    // 실제로 그려진 높이를 재서 크기를 고친다(화면에 그리기 전에 끝난다).
+    setFit((f) =>
+      f.shrink > (f.hideLabel ? 0.5 : 0.7)
+        ? { ...f, shrink: Math.round((f.shrink - 0.06) * 100) / 100 }
+        : // 모든 명제표에 똑같이 적힌 전시명을 이 카드에서만 빼고, 작품명을 다시 크게 맞춘다.
+          { shrink: 1, hideLabel: true },
+    );
+  }, [shrink, hideLabel, fontTick, art.title, art.artists, art.material, art.size]);
   useLayoutEffect(() => {
     let alive = true;
     document.fonts?.ready.then(() => alive && setFontTick((n) => n + 1));
@@ -451,9 +461,7 @@ function LabelCard({
       alive = false;
     };
   }, []);
-  const titleMax = t.title * (0.4 + 0.6 * shrink);
-  const artistMax = t.artist * Math.max(0.7, shrink);
-  const metaMax = t.meta * Math.max(0.75, shrink);
+  const titleMax = t.title * shrink;
   const artistsInLines = art.artists.length <= t.artistLines;
 
   const qrBox = (
@@ -518,27 +526,30 @@ function LabelCard({
         >
           <div className={cn("w-full min-w-0", vertical && "text-center")}>
             {/* 모든 글은 잘라내지(…) 않고, 칸에 맞게 글자 크기를 줄인다 */}
-            <FitText max={t.label} min={t.label * 0.6} fallbackLines={2} className="w-full font-bold tracking-[0.02em] text-[#2a5caa]">
-              {size === "a6" ? `${organizer} · ${exhibitionTitle}` : exhibitionTitle}
-            </FitText>
+            {!hideLabel && (
+              <FitText max={t.label} min={t.label * 0.6} fallbackLines={2} className="w-full font-bold tracking-[0.02em] text-[#2a5caa]">
+                {size === "a6" ? `${organizer} · ${exhibitionTitle}` : exhibitionTitle}
+              </FitText>
+            )}
             {/* 작품명: 한 줄로 알맞은 크기(약 72%)까지만 줄이고, 그래도 길면 두 줄로 나눠 크게 둔다 */}
             <FitText
               max={titleMax}
-              min={titleMax * 0.5}
+              // 작품명은 작가 이름보다 작아지지 않는다(글의 위계를 지킨다).
+              min={Math.max(titleMax * 0.5, t.artist * 1.12)}
               lines={1}
               fallbackLines={2}
               wrapBelow={0.72}
               lineHeight={1.16}
               className="w-full font-serif font-bold tracking-[-0.015em]"
-              style={{ marginTop: mm(t.label * 0.6) }}
+              style={{ marginTop: hideLabel ? 0 : mm(t.label * 0.6) }}
             >
               {art.title}
             </FitText>
             {art.artists.length > 0 && (
               // 작가: 쪽빛 세로줄 옆에 한 사람씩 한 줄로. 많으면(4명 이상) ‘ · ’로 이어 쓴다.
               <FitText
-                max={artistMax}
-                min={artistMax * 0.55}
+                max={t.artist}
+                min={t.artist * 0.55}
                 lines={artistsInLines ? art.artists.length : 1}
                 fallbackLines={artistsInLines ? Math.min(art.artists.length * 2, 4) : t.artistLines}
                 wrapBelow={0.8}
@@ -574,7 +585,8 @@ function LabelCard({
                 )
                   .filter(([, v]) => v)
                   .map(([label, value]) => (
-                    <FitText key={label} max={metaMax} min={metaMax * 0.6} lineHeight={1.35} className="w-full text-[#57524a]">
+                    // 재료·크기는 늘 같은 크기: 길면 줄이지 않고 다음 줄로 넘긴다.
+                    <FitText key={label} max={t.meta} min={t.meta * 0.6} fallbackLines={2} wrapBelow={0.97} lineHeight={1.35} className="w-full text-[#57524a]">
                       <span className="mr-[0.55em] font-bold text-[#2a5caa]">{label}</span>
                       {value}
                     </FitText>

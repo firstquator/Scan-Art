@@ -7,9 +7,9 @@ import { cn } from "@/lib/cn";
 import { tap } from "@/lib/haptics";
 
 const SIZES = [
-  { key: "base", label: "보통", className: "text-[17px] leading-[1.72]" },
-  { key: "lg", label: "크게", className: "text-[20px] leading-[1.66]" },
-  { key: "xl", label: "아주 크게", className: "text-[23.5px] leading-[1.6]" },
+  { key: "base", label: "보통", className: "text-[17px] leading-[1.6]" },
+  { key: "lg", label: "크게", className: "text-[20px] leading-[1.55]" },
+  { key: "xl", label: "아주 크게", className: "text-[23.5px] leading-[1.5]" },
 ] as const;
 
 type SizeKey = (typeof SIZES)[number]["key"];
@@ -89,12 +89,12 @@ export function Description({ paragraphs, activeSentence }: { paragraphs: Paragr
   const sizeClass = SIZES.find((s) => s.key === size)?.className ?? SIZES[0].className;
 
   return (
-    <div className={cn("relative mt-5 space-y-[0.8em] tracking-[-0.005em] text-ink/90 transition-[font-size] duration-300 [text-wrap:pretty]", sizeClass)}>
+    <div className={cn("relative mt-5 space-y-[0.7em] tracking-[-0.005em] text-ink/90 transition-[font-size] duration-300 [text-wrap:pretty]", sizeClass)}>
       <span className="pointer-events-none absolute -left-1 -top-3 select-none font-serif text-[4.2rem] font-bold leading-none text-blue-mist" aria-hidden>
         “
       </span>
       {paragraphs.map((p, pi) => (
-        <p key={pi} className={cn("relative", pi === 0 && "pt-6 text-[1.08em] font-medium leading-[1.62] text-ink")}>
+        <p key={pi} className={cn("relative", pi === 0 && "pt-6 text-[1.08em] font-medium leading-[1.5] text-ink")}>
           {p.sentences.map((s) => (
             <span
               key={s.index}

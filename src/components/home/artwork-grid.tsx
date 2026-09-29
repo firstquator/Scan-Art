@@ -48,6 +48,7 @@ export function ArtworkGrid({ artworks }: { artworks: ArtworkLink[] }) {
                         alt=""
                         sizes="(max-width: 640px) 48vw, 300px"
                         priority={i < 4}
+                        loader
                         className="h-full w-full transition-transform duration-700 ease-[var(--ease-out-soft)] group-hover:scale-[1.04]"
                       />
                     ) : (

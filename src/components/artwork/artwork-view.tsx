@@ -120,10 +120,14 @@ export function ArtworkView({ artwork, prev, next, index, total, exhibitionTitle
                 </div>
                 <Description paragraphs={paragraphs} activeSentence={speech.current} />
                 {artwork.artists.length > 0 && (
-                  <p className="mt-6 flex items-center justify-end gap-2 text-right font-hand text-[1.45rem] leading-none text-ink-soft">
-                    <span className="h-px w-8 bg-ink-faint/50" aria-hidden />
-                    {joinArtists(artwork.artists)}
-                  </p>
+                  <div className="mt-7 flex items-start justify-end gap-3" aria-label={`작가: ${joinArtists(artwork.artists)}`}>
+                    <span className="mt-[0.7rem] h-px w-8 shrink-0 bg-ink-faint/50" aria-hidden />
+                    <ul className="space-y-1.5 text-right font-hand text-[1.45rem] leading-[1.15] text-ink-soft">
+                      {artwork.artists.map((name, i) => (
+                        <li key={`${name}-${i}`}>{name}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </section>
             </Reveal>

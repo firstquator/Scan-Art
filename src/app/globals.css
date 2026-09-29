@@ -308,3 +308,20 @@ body {
     animation: none !important;
   }
 }
+
+/* 먹 고리 로딩: 붓이 원을 그렸다 거두며 천천히 돈다 */
+@keyframes ink-ring-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ink-ring-draw {
+  0% { stroke-dashoffset: 126; }
+  50% { stroke-dashoffset: 30; }
+  100% { stroke-dashoffset: -96; }
+}
+@keyframes ink-seal-breathe {
+  0%, 100% { transform: scale(0.94); opacity: 0.85; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ink-loader * { animation-duration: 0s !important; animation-iteration-count: 1 !important; }
+}

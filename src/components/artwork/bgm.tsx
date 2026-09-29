@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 /**
  * 작품 화면 배경음악.
  * - 오디오 요소를 하나만 두고 페이지를 옮겨 다녀도 유지한다: 다음 작품도 같은 음악이면 끊기지 않고 이어진다.
- * - 켬/끔은 기기에 기억한다. 처음에는 꺼져 있다(전시장에서 갑자기 소리가 나지 않도록).
+ * - 켬/끔은 기기에 기억한다. 처음에는 켜져 있다: 브라우저가 자동 재생을 막으면 화면을 처음 누를 때 시작한다.
  * - 작가 목소리·읽어주기가 나오는 동안에는 잠시 줄였다가(멈췄다가) 끝나면 다시 튼다.
  *   (아이폰은 소리 크기를 코드로 바꿀 수 없어 줄이는 대신 멈춘다.)
  */
@@ -169,9 +169,9 @@ function loadPref() {
   if (prefLoaded) return;
   prefLoaded = true;
   try {
-    enabled = window.localStorage.getItem(STORAGE_KEY) === "on";
+    enabled = window.localStorage.getItem(STORAGE_KEY) !== "off";
   } catch {
-    enabled = false;
+    enabled = true;
   }
   emit();
 }
@@ -292,7 +292,7 @@ export function BgmToggle({ src, duck, preview }: { src: string; duck: boolean; 
             className="absolute right-0 top-[calc(100%+10px)] z-40 whitespace-nowrap rounded-2xl bg-ink px-3.5 py-2 text-[13px] font-semibold text-paper-light shadow-[var(--shadow-lift)]"
           >
             <span className="absolute -top-1.5 right-6 h-3 w-3 rotate-45 rounded-[2px] bg-ink" aria-hidden />
-            배경음악과 함께 감상해 보세요
+            배경음악이 흘러요 · 누르면 꺼집니다
           </motion.p>
         )}
       </AnimatePresence>

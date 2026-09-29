@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import { ArtworkGrid } from "@/components/home/artwork-grid";
-import { ArtImage } from "@/components/artwork/art-image";
+import { CoverImage } from "@/components/home/cover-image";
 import { PageTransition } from "@/components/page-transition";
 import { Reveal } from "@/components/ui/reveal";
 import { loadPublishedArtworks, loadSettings } from "@/lib/data/public";
@@ -86,15 +86,7 @@ export default async function HomePage() {
                 <Reveal>
                   {/* 표지는 글씨가 든 포스터일 수 있어 자르지 않고 원래 비율 그대로 건다. */}
                   <figure className="deckle rounded-[24px] p-2 sm:p-2.5">
-                    <ArtImage
-                      image={settings.cover}
-                      alt={`${settings.title} 대표 사진`}
-                      sizes="(max-width: 900px) 100vw, 880px"
-                      priority
-                      fit="contain"
-                      className="w-full rounded-[17px]"
-                      style={{ aspectRatio: `${settings.cover.width} / ${settings.cover.height}` }}
-                    />
+                    <CoverImage image={settings.cover} title={settings.title} />
                   </figure>
                 </Reveal>
               )}

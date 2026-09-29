@@ -9,12 +9,15 @@ import { cn } from "@/lib/cn";
 /**
  * 작품 화면 배경음악.
  * - 오디오 요소를 하나만 두고 페이지를 옮겨 다녀도 유지한다: 다음 작품도 같은 음악이면 끊기지 않고 이어진다.
- * - 켬/끔은 기기에 기억한다. 처음에는 켜져 있다: 브라우저가 자동 재생을 막으면 화면을 처음 누를 때 시작한다.
+ * - 처음에는 켜져 있다: 브라우저가 자동 재생을 막으면 화면을 처음 누를 때 시작한다. 끈 선택은 3시간만 기억한다.
  * - 작가 목소리·읽어주기가 나오는 동안에는 잠시 줄였다가(멈췄다가) 끝나면 다시 튼다.
  *   (아이폰은 소리 크기를 코드로 바꿀 수 없어 줄이는 대신 멈춘다.)
  */
 
-const STORAGE_KEY = "scan-art:bgm";
+// 키를 바꾸면 예전에 저장된 "끔"이 모두 초기화된다(v2: 기본 켜짐으로 바꾸며 초기화).
+const STORAGE_KEY = "scan-art:bgm:v2";
+/** "끔"은 한 번 관람하는 동안만 기억한다. 나중에 다시 오면 다시 켜진 채로 시작한다. */
+const OFF_TTL_MS = 3 * 60 * 60 * 1000;
 const VOLUME = 0.45;
 // 브라우저가 '사용자가 직접 한 동작'으로 인정해 소리를 허락하는 이벤트들.
 // (pointerdown은 휴대폰 터치에서 인정되지 않아 넣지 않는다.)
@@ -156,7 +159,7 @@ function setEnabled(value: boolean, persist: boolean) {
   if (!value) setBlocked(false);
   if (persist) {
     try {
-      window.localStorage.setItem(STORAGE_KEY, value ? "on" : "off");
+      window.localStorage.setItem(STORAGE_KEY, value ? "on" : `off:${Date.now()}`);
     } catch {
       // 개인정보 보호 모드 등에서는 기억하지 못해도 괜찮다.
     }
@@ -177,11 +180,16 @@ function loadPref() {
   if (prefLoaded) return;
   prefLoaded = true;
   try {
-    enabled = window.localStorage.getItem(STORAGE_KEY) !== "off";
+    enabled = !isFreshOff(window.localStorage.getItem(STORAGE_KEY));
   } catch {
     enabled = true;
   }
   emit();
+}
+
+function isFreshOff(value: string | null): boolean {
+  if (!value?.startsWith("off:")) return false;
+  return Date.now() - Number(value.slice(4)) < OFF_TTL_MS;
 }
 
 function hasPref(): boolean {
